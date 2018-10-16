@@ -19,7 +19,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var addItemNum = 5 //追加ボタンを押した時に、一度に追加するアイテム欄の数
     var maxItemNum = 30 //アイテム欄の最大数
     var cells: [editItemTableViewCell] = []
-    var countI = 0
     
     @IBAction func tapSaveButton(_ sender: Any) {
         print(#function)
@@ -33,12 +32,20 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         print(itemNum)
         for i in 0..<itemNum {
             print(i)
+            if let text = cells[i].itemTextField.text {
+                if text != "" {
+                    newItemArray.append(text)
+                }
+            }
+            /*
+             問題点：画面外のセルを読み込む時にnilでエラーになる
             let cell = tableView.cellForRow(at: IndexPath(row: i, section: 0)) as! editItemTableViewCell
             if let text = cell.itemTextField.text {
                 if text != ""{
                     newItemArray.append(text)
                 }
             }
+            */
         }
         print(newTitleText)
         print(newItemArray)
@@ -83,8 +90,16 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         let addCellNib = UINib(nibName: "editAddTableViewCell", bundle: nil)
         tableView.register(addCellNib, forCellReuseIdentifier: "addCell")
-
+        
+        for i in 0..<maxItemNum {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell") as! editItemTableViewCell
+            cell.itemTextField.placeholder = String(i)
+            cells.append(cell)
+        }
+        cells[0].itemTextField.placeholder = "３０文字まで"
+        print(cells.count)
     }
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 2    //section0:アイテム入力欄、section1:追加ボタン
     }
@@ -99,10 +114,8 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 {
-            countI += 1
-            print(countI)
-            let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell", for: indexPath) as! editItemTableViewCell
-            return cell
+            print("indexPath.row:\(indexPath.row)")
+            return cells[indexPath.row]
         }else{
             let cell = tableView.dequeueReusableCell(withIdentifier: "addCell", for: indexPath) as! editAddTableViewCell
             cell.addButton.addTarget(self, action:#selector(handleTapAddButton), for: .touchUpInside)
