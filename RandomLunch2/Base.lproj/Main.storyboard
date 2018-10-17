@@ -38,6 +38,9 @@
                                     <constraint firstAttribute="width" constant="30" id="yjP-ZD-hb2"/>
                                 </constraints>
                                 <state key="normal" title="Button" image="削除"/>
+                                <connections>
+                                    <action selector="tapDeleteButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="xc2-GY-Iec"/>
+                                </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="9lI-gg-Yzq">
                                 <rect key="frame" x="263" y="30" width="30" height="30"/>
@@ -79,6 +82,9 @@
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="k4H-oz-kh0">
                                 <rect key="frame" x="172" y="586" width="31" height="30"/>
                                 <state key="normal" title="選ぶ"/>
+                                <connections>
+                                    <action selector="tapChoiceButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="4ND-Xv-eGf"/>
+                                </connections>
                             </button>
                             <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="矢印" translatesAutoresizingMaskIntoConstraints="NO" id="Dw8-d0-T4E">
                                 <rect key="frame" x="157.5" y="435" width="60" height="50"/>
@@ -119,6 +125,10 @@
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                     </view>
                     <connections>
+                        <outlet property="choiceButton" destination="k4H-oz-kh0" id="FGA-7x-vEk"/>
+                        <outlet property="deleteButton" destination="nkg-sd-btA" id="5oW-Rp-e0L"/>
+                        <outlet property="editButton" destination="9lI-gg-Yzq" id="1rc-We-4Xp"/>
+                        <outlet property="listButton" destination="k88-1I-E99" id="fo1-pf-SfS"/>
                         <outlet property="tableView" destination="ZBT-wb-AfY" id="6d0-r9-HLT"/>
                         <outlet property="titleLabel" destination="7lE-Iu-5Zq" id="EqY-Wz-CrP"/>
                         <segue destination="rGG-jp-4Wl" kind="presentation" identifier="newSegue" id="IQe-hh-hZw"/>
@@ -169,7 +179,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="5oG-U4-pOQ">
-                                <rect key="frame" x="20" y="157" width="335" height="290"/>
+                                <rect key="frame" x="20" y="157" width="335" height="490"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </tableView>
                             <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="１５文字まで" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="4Oj-2T-bZA">
@@ -198,7 +208,7 @@
                             <constraint firstItem="gpk-0a-GW6" firstAttribute="top" secondItem="4Oj-2T-bZA" secondAttribute="bottom" constant="10" id="Rz1-IZ-pm6"/>
                             <constraint firstItem="gpk-0a-GW6" firstAttribute="top" secondItem="4Oj-2T-bZA" secondAttribute="bottom" constant="10" id="RzM-Xi-Vnv"/>
                             <constraint firstItem="5HR-TU-V8l" firstAttribute="trailing" secondItem="oKL-Pu-5ka" secondAttribute="trailing" constant="40" id="Wh6-CZ-xTG"/>
-                            <constraint firstItem="5HR-TU-V8l" firstAttribute="bottom" secondItem="5oG-U4-pOQ" secondAttribute="bottom" constant="220" id="dYP-zX-hOK"/>
+                            <constraint firstItem="5HR-TU-V8l" firstAttribute="bottom" secondItem="5oG-U4-pOQ" secondAttribute="bottom" constant="20" id="dYP-zX-hOK"/>
                             <constraint firstItem="5oG-U4-pOQ" firstAttribute="leading" secondItem="5HR-TU-V8l" secondAttribute="leading" constant="20" id="dgx-Ja-mGr"/>
                             <constraint firstItem="u9J-Og-6wE" firstAttribute="top" secondItem="5HR-TU-V8l" secondAttribute="top" constant="10" id="lPd-6u-165"/>
                             <constraint firstItem="BC3-n8-xIs" firstAttribute="leading" secondItem="5HR-TU-V8l" secondAttribute="leading" constant="20" id="qHa-x6-X2b"/>
@@ -206,6 +216,7 @@
                         <viewLayoutGuide key="safeArea" id="5HR-TU-V8l"/>
                     </view>
                     <connections>
+                        <outlet property="constantTableViewBottom" destination="dYP-zX-hOK" id="Egl-fU-q8U"/>
                         <outlet property="tableView" destination="5oG-U4-pOQ" id="uIi-Fb-OyW"/>
                         <outlet property="titleTextField" destination="4Oj-2T-bZA" id="gXV-Oo-xNR"/>
                     </connections>
@@ -272,6 +283,6 @@
         <image name="閉じる2" width="40" height="40"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="bks-54-ax2"/>
+        <segue reference="IQe-hh-hZw"/>
     </inferredMetricsTieBreakers>
 </document>

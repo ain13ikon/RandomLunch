@@ -16,6 +16,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     @IBOutlet weak var titleTextField: UITextField!
     
+    @IBOutlet weak var constantTableViewBottom: NSLayoutConstraint!
     
     var defaultNum = 5 //初期表示するアイテム欄の数
     var addItemNum = 5 //追加ボタンを押した時に、一度に追加するアイテム欄の数
@@ -34,12 +35,19 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var newTitleText: String = ""
     var newItemArray: [String] = []
     
+    var keyboardHeight: CGFloat = 260   //仮
+    
+    var editingIndex: Int = 0   //入力中のセルインデックスをキープする
+    var editingTextField: UITextField?
+    
     deinit {
         print("Edit deinit")
     }
 
     @IBAction func tapSaveButton(_ sender: Any) {
         print(#function)
+        
+        keepTextField()
         
         //タイトルの読み取り
         newTitleText = ""
@@ -80,11 +88,13 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         print(#function)
         //保存先の取得
         let dataRef = Database.database().reference().child(Const.DataPath)
-        if segue == "new"{
+        if dataId == "" {
+            print("新規登録")
             //新規登録
             dataRef.childByAutoId().setValue(["title": newTitleText, "items": newItemArray])
         }else{
             //上書き
+            print("上書き保存")
             dataRef.child(dataId).updateChildValues(["title": newTitleText, "items": newItemArray])
         }
     }
@@ -142,18 +152,43 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         print("セルを操作中：\(indexPath.row)")
     }
     
-
-    func textFieldDidEndEditing(_ textField:UITextField){
-        print("入力完了後に呼び出し")
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        print("入力開始時に呼び出し")
         //入力されたtextFieldが存在するセルを取得して、セルが存在するindexを取得
         if let cell = textField.superview?.superview as? editItemTableViewCell,
             let indexPath = tableView.indexPath(for: cell){
-                print(indexPath.row)
-                keepText.update(index: indexPath.row, string: textField.text ?? "")
+            editingIndex = indexPath.row
+            editingTextField = textField
+            print(editingIndex)
         }
+    }
+    
+    func keepTextField(){
+        keepText.update(index: editingIndex, string: editingTextField?.text ?? "")
         print(keepText.keepArray)
     }
 
+    func textFieldDidEndEditing(_ textField:UITextField){
+        print("入力完了後に呼び出し")
+        keepTextField()
+    }
+    
+    
+    /*
+    @objc private func keyboardWillShow(_ notification: Notification) {
+        guard let userInfo = notification.userInfo as? [String: Any] else {
+            return
+        }
+        guard let keyboardInfo = userInfo[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
+            return
+        }
+        let keyboardSize = keyboardInfo.cgRectValue.height
+        print("キーボードの高さ")
+        print(keyboardSize)
+        constantTableViewBottom.constant = CGFloat(keyboardSize)
+    }
+    */
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -169,6 +204,18 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         let addCellNib = UINib(nibName: "editAddTableViewCell", bundle: nil)
         tableView.register(addCellNib, forCellReuseIdentifier: "addCell")
+        
+        
+        //キーボードの高さに合わせてtableViewの位置を調整
+        constantTableViewBottom.constant = keyboardHeight
+        /*
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow(_:)),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        */
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -221,6 +268,8 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func handleTapAddButton(){
+        keepTextField()
+        
         if displayNum >= maxItemNum {
             return
         }
