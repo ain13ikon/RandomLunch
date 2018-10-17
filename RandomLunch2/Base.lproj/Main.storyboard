@@ -120,6 +120,7 @@
                     </view>
                     <connections>
                         <outlet property="tableView" destination="ZBT-wb-AfY" id="6d0-r9-HLT"/>
+                        <outlet property="titleLabel" destination="7lE-Iu-5Zq" id="EqY-Wz-CrP"/>
                         <segue destination="rGG-jp-4Wl" kind="presentation" identifier="newSegue" id="IQe-hh-hZw"/>
                         <segue destination="rGG-jp-4Wl" kind="presentation" identifier="editSegue" id="bks-54-ax2"/>
                         <segue destination="cTD-g2-5x7" kind="presentation" identifier="listSegue" id="RZ0-WF-ipD"/>

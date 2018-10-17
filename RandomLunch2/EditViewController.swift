@@ -7,52 +7,67 @@
 //
 
 import UIKit
+import Firebase
+import FirebaseDatabase
 
-class EditViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class EditViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
     @IBOutlet weak var tableView: UITableView!
     
     @IBOutlet weak var titleTextField: UITextField!
     
     
-    var itemNum = 5 //初期表示するアイテム欄の数
+    var defaultNum = 5 //初期表示するアイテム欄の数
     var addItemNum = 5 //追加ボタンを押した時に、一度に追加するアイテム欄の数
+    var displayNum = 0 //現在表示しているアイテム欄の数
     var maxItemNum = 30 //アイテム欄の最大数
     var cells: [editItemTableViewCell] = []
     
+    var keepText: TextFieldKeepData!
+    var titleArray: [String] = []
+    
+    var segue: String = ""
+    var dataId: String = ""
+    var dataTitle: String = ""
+    var dataItems: [String] = []
+    
+    var newTitleText: String = ""
+    var newItemArray: [String] = []
+    
+    deinit {
+        print("Edit deinit")
+    }
+
     @IBAction func tapSaveButton(_ sender: Any) {
         print(#function)
         
-        var newTitleText: String = ""
+        //タイトルの読み取り
+        newTitleText = ""
         if let text = titleTextField.text{
             newTitleText = text
         }
         
-        var newItemArray: [String] = []
-        print(itemNum)
-        for i in 0..<itemNum {
+        //アイテムの読み取り
+        newItemArray = []
+        print(displayNum)
+        for i in 0..<displayNum {
             print(i)
-            if let text = cells[i].itemTextField.text {
-                if text != "" {
-                    newItemArray.append(text)
-                }
+            if let text = keepText.keepArray[i] {
+                newItemArray.append(text)
             }
-            /*
-             問題点：画面外のセルを読み込む時にnilでエラーになる
-            let cell = tableView.cellForRow(at: IndexPath(row: i, section: 0)) as! editItemTableViewCell
-            if let text = cell.itemTextField.text {
-                if text != ""{
-                    newItemArray.append(text)
-                }
-            }
-            */
         }
+        
         print(newTitleText)
         print(newItemArray)
         
-        guard check(title: newTitleText, items: newItemArray) else {return}
+        //入力チェック
+        guard check() else {return}
         
-        print("保存する")
+        //データベースに保存
+        saveToDatabase()
+        
+        //抽選画面へ戻る
+        self.dismiss(animated: true, completion: nil)
         
     }
 
@@ -61,20 +76,84 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         self.dismiss(animated: true, completion: nil)
     }
     
-    func check(title: String, items: [String]) -> Bool{
+    func saveToDatabase(){
+        print(#function)
+        //保存先の取得
+        let dataRef = Database.database().reference().child(Const.DataPath)
+        if segue == "new"{
+            //新規登録
+            dataRef.childByAutoId().setValue(["title": newTitleText, "items": newItemArray])
+        }else{
+            //上書き
+            dataRef.child(dataId).updateChildValues(["title": newTitleText, "items": newItemArray])
+        }
+    }
+
+    func check() -> Bool{
         var returnFlag = true
-        if title == "" {
+        var error: [String] = []
+        if newTitleText == "" {
             print("エラー：　タイトルが空白")
+            error.append("タイトルを入力してください。")
             returnFlag = false
         }
         
-        if items.count < 2 {
+        if newItemArray.count < 2 {
             print("エラー：　アイテムが少ない")
+            error.append("アイテムは２つ以上登録してください。")
             returnFlag = false
         }
+        
+        if error != [] {
+            showAlert(error)
+        }
+        
         return returnFlag
     }
     
+    func showAlert(_ alerts: [String]){
+        let title = "入力が間違っています"
+        var message = ""
+        for text in alerts {
+            message += text
+        }
+        
+        let alertController:UIAlertController =
+            UIAlertController(title: title,
+                              message: message,
+                              preferredStyle: .alert)
+        
+        // Default のaction
+        let defaultAction:UIAlertAction = UIAlertAction(
+            title: "OK",
+            style: .default,
+            handler:{(action:UIAlertAction!) -> Void in
+                print("\(String(action.title!))がタップされました")
+        })
+        
+        // actionを追加
+        alertController.addAction(defaultAction)
+        
+        // UIAlertControllerの起動
+        present(alertController, animated: true, completion: nil)
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        print("セルを操作中：\(indexPath.row)")
+    }
+    
+
+    func textFieldDidEndEditing(_ textField:UITextField){
+        print("入力完了後に呼び出し")
+        //入力されたtextFieldが存在するセルを取得して、セルが存在するindexを取得
+        if let cell = textField.superview?.superview as? editItemTableViewCell,
+            let indexPath = tableView.indexPath(for: cell){
+                print(indexPath.row)
+                keepText.update(index: indexPath.row, string: textField.text ?? "")
+        }
+        print(keepText.keepArray)
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -90,14 +169,21 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         let addCellNib = UINib(nibName: "editAddTableViewCell", bundle: nil)
         tableView.register(addCellNib, forCellReuseIdentifier: "addCell")
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         
-        for i in 0..<maxItemNum {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell") as! editItemTableViewCell
-            cell.itemTextField.placeholder = String(i)
-            cells.append(cell)
+        print("edit appear")
+        titleTextField.text = dataTitle
+        keepText = TextFieldKeepData()
+        for (index, string) in dataItems.enumerated() {
+            keepText.update(index: index, string: string)
         }
-        cells[0].itemTextField.placeholder = "３０文字まで"
-        print(cells.count)
+        
+        print(keepText.keepArray.count)
+        print(keepText.keepArray)
+        tableView.reloadData()
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -106,7 +192,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
-            return itemNum
+            return displayNum
         }else{
             return 1
         }
@@ -115,11 +201,18 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if indexPath.section == 0 {
             print("indexPath.row:\(indexPath.row)")
-            return cells[indexPath.row]
+            let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell") as! editItemTableViewCell
+            if let text = keepText.keepArray[indexPath.row] {
+                cell.itemTextField.text = text
+            }else{
+                cell.itemTextField.text = ""
+            }
+            cell.itemTextField.delegate = self
+            return cell
         }else{
             let cell = tableView.dequeueReusableCell(withIdentifier: "addCell", for: indexPath) as! editAddTableViewCell
             cell.addButton.addTarget(self, action:#selector(handleTapAddButton), for: .touchUpInside)
-            if itemNum >= maxItemNum {
+            if displayNum >= maxItemNum {
                 cell.addButton.isEnabled = false
             }
             
@@ -128,14 +221,14 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func handleTapAddButton(){
-        if itemNum >= maxItemNum {
+        if displayNum >= maxItemNum {
             return
         }
         
-        itemNum += addItemNum
+        displayNum += addItemNum
         
-        if itemNum > maxItemNum {
-            itemNum = maxItemNum
+        if displayNum > maxItemNum {
+            displayNum = maxItemNum
         }
         
         tableView.reloadData()
