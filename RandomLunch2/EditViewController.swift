@@ -13,32 +13,35 @@ import FirebaseDatabase
 class EditViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
     @IBOutlet weak var tableView: UITableView!
-    
     @IBOutlet weak var titleTextField: UITextField!
-    
     @IBOutlet weak var constantTableViewBottom: NSLayoutConstraint!
     
+    //仕様データ
     var defaultNum = 5 //初期表示するアイテム欄の数
     var addItemNum = 5 //追加ボタンを押した時に、一度に追加するアイテム欄の数
     var displayNum = 0 //現在表示しているアイテム欄の数
     var maxItemNum = 30 //アイテム欄の最大数
-    var cells: [editItemTableViewCell] = []
     
-    var keepText: TextFieldKeepData!
+    //textFieldの入力内容を一時保管するための変数・配列
+    var keepText: TextFieldKeepData!    //入力データを保管する辞書配列
+    var editingIndex: Int = 0           //入力中のセルインデックスをキープする
+    var editingTextField: UITextField?  //入力中のtextFieldオブジェクトをキープする
+
     var titleArray: [String] = []
     
+    //ViewControllerから画面遷移時に送られるデータ
     var segue: String = ""
     var dataId: String = ""
     var dataTitle: String = ""
     var dataItems: [String] = []
     
+    //データベースに保存する新しいデータ
     var newTitleText: String = ""
     var newItemArray: [String] = []
     
+    //表示設定データ
     var keyboardHeight: CGFloat = 260   //仮
     
-    var editingIndex: Int = 0   //入力中のセルインデックスをキープする
-    var editingTextField: UITextField?
     
     deinit {
         print("Edit deinit")
@@ -47,6 +50,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBAction func tapSaveButton(_ sender: Any) {
         print(#function)
         
+        //textFieldに入力中のデータを一時保管配列に追加
         keepTextField()
         
         //タイトルの読み取り
@@ -75,6 +79,10 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         saveToDatabase()
         
         //抽選画面へ戻る
+        if segue == "new"{
+            let vc = self.presentingViewController as! ViewController
+            vc.nowDataIndex = 0
+        }
         self.dismiss(animated: true, completion: nil)
         
     }
@@ -152,9 +160,11 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         print("セルを操作中：\(indexPath.row)")
     }
     
+    //入力中のセルインデックスとテキストフィールドオブジェクトをグローバル変数に一時保管する
     func textFieldDidBeginEditing(_ textField: UITextField) {
         print("入力開始時に呼び出し")
         //入力されたtextFieldが存在するセルを取得して、セルが存在するindexを取得
+        //UITextFieldを含むUITableViewCellのIndexPathを取得
         if let cell = textField.superview?.superview as? editItemTableViewCell,
             let indexPath = tableView.indexPath(for: cell){
             editingIndex = indexPath.row
@@ -163,16 +173,18 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
     
-    func keepTextField(){
-        keepText.update(index: editingIndex, string: editingTextField?.text ?? "")
-        print(keepText.keepArray)
-    }
-
+    //入力終了時
     func textFieldDidEndEditing(_ textField:UITextField){
         print("入力完了後に呼び出し")
         keepTextField()
     }
     
+    //一時保管の配列にデータを追加・更新
+    func keepTextField(){
+        keepText.update(index: editingIndex, string: editingTextField?.text ?? "")
+        print(keepText.keepArray)
+    }
+
     
     /*
     @objc private func keyboardWillShow(_ notification: Notification) {

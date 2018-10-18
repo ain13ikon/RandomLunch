@@ -25,6 +25,24 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         self.dismiss(animated: true, completion: nil)
     }
     
+    func sarch(){
+        var resultArray: [Data] = []
+        let sarchWord = "あ"
+        
+        for data_ in dataArray {
+            if data_.title!.contains(sarchWord) {
+                resultArray.append(data_)
+            }else if data_.items!.contains(sarchWord) {
+                resultArray.append(data_)
+            }
+        }
+        
+        for data_ in resultArray {
+            print(data_.title)
+        }
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -36,6 +54,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         //セルのnib取得
         let nib = UINib(nibName: "listTitleTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "titleCell")
+        
+        sarch()
     }
     
         
