@@ -136,6 +136,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }else if segue.identifier == "listSegue" {
             let listVC = segue.destination as! ListViewController
             listVC.dataArray = dataArray
+            listVC.displayedDataArray = dataArray
         }
     }
     

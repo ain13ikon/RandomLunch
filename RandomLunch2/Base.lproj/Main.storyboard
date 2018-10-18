@@ -247,6 +247,10 @@
                             <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="Mb2-3x-iXV">
                                 <rect key="frame" x="0.0" y="65" width="375" height="56"/>
                                 <textInputTraits key="textInputTraits"/>
+                                <scopeButtonTitles>
+                                    <string>Title</string>
+                                    <string>Title</string>
+                                </scopeButtonTitles>
                             </searchBar>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="tKI-uM-3i3">
                                 <rect key="frame" x="20" y="121" width="335" height="526"/>
@@ -268,6 +272,7 @@
                         <viewLayoutGuide key="safeArea" id="jQK-iy-iu4"/>
                     </view>
                     <connections>
+                        <outlet property="searchBar" destination="Mb2-3x-iXV" id="Fun-Lz-XOg"/>
                         <outlet property="tableView" destination="tKI-uM-3i3" id="ur5-pq-abt"/>
                     </connections>
                 </viewController>

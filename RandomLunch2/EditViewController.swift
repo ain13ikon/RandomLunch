@@ -24,7 +24,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //textFieldの入力内容を一時保管するための変数・配列
     var keepText: TextFieldKeepData!    //入力データを保管する辞書配列
-    var editingIndex: Int = 0           //入力中のセルインデックスをキープする
+    var editingIndex: Int?           //入力中のセルインデックスをキープする
     var editingTextField: UITextField?  //入力中のtextFieldオブジェクトをキープする
 
     var titleArray: [String] = []
@@ -181,7 +181,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //一時保管の配列にデータを追加・更新
     func keepTextField(){
-        keepText.update(index: editingIndex, string: editingTextField?.text ?? "")
+        keepText.update(key: editingIndex, string: editingTextField?.text)
         print(keepText.keepArray)
     }
 
@@ -237,7 +237,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         titleTextField.text = dataTitle
         keepText = TextFieldKeepData()
         for (index, string) in dataItems.enumerated() {
-            keepText.update(index: index, string: string)
+            keepText.update(key: index, string: string)
         }
         
         print(keepText.keepArray.count)

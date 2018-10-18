@@ -34,9 +34,18 @@ class TextFieldKeepData: NSObject {
     var keepArray: [Int: String] = [:]
     //[セルのindex: 入力されたテキスト]
     
-    func update(index: Int, string: String){
-        if string != "" {
-            keepArray.updateValue(string, forKey: index)
+    func update(key: Int?, string: String?){
+        if let key = key, let string = string {
+            if string == "" {
+                print("keepArray削除")
+                keepArray[key] = nil
+            }else{
+                print("keepArray追加")
+                keepArray.updateValue(string, forKey: key)
+            }
+        }else{
+            print("nilのため処理せず")
         }
     }
+    
 }
