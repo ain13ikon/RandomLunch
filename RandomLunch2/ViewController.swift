@@ -12,18 +12,18 @@ import FirebaseDatabase
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
-    var dataArray: [Data] = []
-    var nowDataIndex: Int = 0
-    //var isAvailableData_Flag = false
+    var dataArray: [Data] = []  //Firebaseから取ってきた全てのデータ
+    var nowDataIndex: Int = 0   //現在使用中のデータのインデックス
 
+    //現在使用中のデータ
     var dataId: String = ""
     var dataTitle: String = ""
     var dataItems: [String] = []
     
-    var itemAddNum = 5
-    
+    var itemAddNum = 5           //(EditVCで)初期表示＆一度に追加するアイテムの数
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var resultLabel: UILabel!
     
     @IBOutlet weak var listButton: UIButton!
     @IBOutlet weak var editButton: UIButton!
@@ -57,7 +57,15 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @IBAction func tapChoiceButton(_ sender: Any) {
         print(#function)
+        let choicedNum = Int(arc4random_uniform(UInt32(dataItems.count)))
         
+        resultLabel.text = dataItems[choicedNum]
+        resultLabel.isHidden = false
+        
+        resultLabel.alpha = 0.0
+        UIView.animate(withDuration: 1.0, animations: {
+                        self.resultLabel.alpha = 1.0
+        })
     }
     
     func deleteAction(){
@@ -186,6 +194,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         titleLabel.text = dataTitle
         tableView.reloadData()
+        
+        resultLabel.isHidden = true
     }
 
     

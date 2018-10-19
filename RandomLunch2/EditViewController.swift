@@ -40,7 +40,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var newItemArray: [String] = []
     
     //表示設定データ
-    var keyboardHeight: CGFloat = 260   //仮
+    //var keyboardHeight: CGFloat = 260   //仮
     
     
     deinit {
@@ -186,20 +186,19 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
 
     
-    /*
     @objc private func keyboardWillShow(_ notification: Notification) {
         guard let userInfo = notification.userInfo as? [String: Any] else {
             return
         }
-        guard let keyboardInfo = userInfo[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
+        guard let keyboardInfo = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
             return
         }
+        
         let keyboardSize = keyboardInfo.cgRectValue.height
         print("キーボードの高さ")
         print(keyboardSize)
-        constantTableViewBottom.constant = CGFloat(keyboardSize)
+        //constantTableViewBottom.constant = CGFloat(keyboardSize)
     }
-    */
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -219,21 +218,33 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         
         //キーボードの高さに合わせてtableViewの位置を調整
-        constantTableViewBottom.constant = keyboardHeight
-        /*
+        //constantTableViewBottom.constant = keyboardHeight
+        
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(keyboardWillShow(_:)),
             name: UIResponder.keyboardWillShowNotification,
             object: nil
         )
-        */
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         print("edit appear")
+        
+        //キーボードの高さに合わせてtableViewの位置を調整
+        let keyboardHeight = KeyboardService.keyboardHeight()
+        print("keyboardの高さ：\(keyboardHeight)")
+        constantTableViewBottom.constant = keyboardHeight + 40
+        /*メモ：
+         viewWillAppearメソッドからこれを呼び出します。
+         viewDidLoadで呼び出されるべきではありません。
+         正しい値はビューが配置されているかどうかに依存します。
+         
+         keyboardHeight()で取得できる値には変換欄が含まれない？
+         */
+
         titleTextField.text = dataTitle
         keepText = TextFieldKeepData()
         for (index, string) in dataItems.enumerated() {

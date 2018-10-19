@@ -80,7 +80,7 @@
                                 </constraints>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="k4H-oz-kh0">
-                                <rect key="frame" x="172" y="586" width="31" height="30"/>
+                                <rect key="frame" x="172" y="595" width="31" height="30"/>
                                 <state key="normal" title="選ぶ"/>
                                 <connections>
                                     <action selector="tapChoiceButton:" destination="BYZ-38-t0r" eventType="touchUpInside" id="4ND-Xv-eGf"/>
@@ -94,9 +94,13 @@
                                 </constraints>
                             </imageView>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="さしすせそアイウエオかきくけこアイウエオ" textAlignment="center" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="4tf-yN-5R9">
-                                <rect key="frame" x="50" y="505" width="275" height="41"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="0.66799789669999998" green="0.47512125970000002" blue="0.25860109930000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <rect key="frame" x="50" y="505" width="275" height="50"/>
+                                <color key="backgroundColor" red="0.66799789669999998" green="0.47512125970000002" blue="0.25860109930000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="50" id="BB2-no-eWF"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="18"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
@@ -129,6 +133,7 @@
                         <outlet property="deleteButton" destination="nkg-sd-btA" id="5oW-Rp-e0L"/>
                         <outlet property="editButton" destination="9lI-gg-Yzq" id="1rc-We-4Xp"/>
                         <outlet property="listButton" destination="k88-1I-E99" id="fo1-pf-SfS"/>
+                        <outlet property="resultLabel" destination="4tf-yN-5R9" id="54b-tf-QEV"/>
                         <outlet property="tableView" destination="ZBT-wb-AfY" id="6d0-r9-HLT"/>
                         <outlet property="titleLabel" destination="7lE-Iu-5Zq" id="EqY-Wz-CrP"/>
                         <segue destination="rGG-jp-4Wl" kind="presentation" identifier="newSegue" id="IQe-hh-hZw"/>
@@ -180,7 +185,7 @@
                             </label>
                             <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="5oG-U4-pOQ">
                                 <rect key="frame" x="20" y="157" width="335" height="490"/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <color key="backgroundColor" red="1" green="0.1814596158" blue="0.37838396089999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </tableView>
                             <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="１５文字まで" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="4Oj-2T-bZA">
                                 <rect key="frame" x="30" y="91" width="315" height="30"/>

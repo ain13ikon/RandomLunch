@@ -25,6 +25,7 @@
                         </connections>
                     </button>
                 </subviews>
+                <color key="backgroundColor" red="0.016804177310000001" green="0.19835099580000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                 <constraints>
                     <constraint firstAttribute="trailing" secondItem="J47-MI-ezG" secondAttribute="trailing" constant="10" id="2Vr-mR-fRE"/>
                     <constraint firstItem="J47-MI-ezG" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="bZO-Ks-t3s"/>

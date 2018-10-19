@@ -37,6 +37,7 @@
                     <constraint firstAttribute="trailing" secondItem="5mj-pr-94s" secondAttribute="trailing" constant="10" id="ZsI-p2-8Y1"/>
                 </constraints>
             </tableViewCellContentView>
+            <color key="backgroundColor" red="0.091001094249999998" green="1" blue="0.96546831300000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
             <viewLayoutGuide key="safeArea" id="njF-e1-oar"/>
             <connections>
                 <outlet property="itemTextField" destination="5mj-pr-94s" id="ymZ-OT-ymx"/>
