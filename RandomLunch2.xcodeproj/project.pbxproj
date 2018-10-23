@@ -17,7 +17,6 @@
 		7100B40521757AB90058BE0F /* listTitleTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7100B40321757AB90058BE0F /* listTitleTableViewCell.swift */; };
 		7100B40621757AB90058BE0F /* listTitleTableViewCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7100B40421757AB90058BE0F /* listTitleTableViewCell.xib */; };
 		7100B4082175C4E10058BE0F /* Const.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7100B4072175C4E10058BE0F /* Const.swift */; };
-		7100B40A2175C5C80058BE0F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7100B4092175C5C80058BE0F /* GoogleService-Info.plist */; };
 		7100B40C2175D0490058BE0F /* Data.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7100B40B2175D0490058BE0F /* Data.swift */; };
 		7131114D2174759700F58BF7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7131114C2174759700F58BF7 /* AppDelegate.swift */; };
 		7131114F2174759700F58BF7 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7131114E2174759700F58BF7 /* ViewController.swift */; };
@@ -27,6 +26,7 @@
 		7131115F2174823700F58BF7 /* EditViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7131115E2174823700F58BF7 /* EditViewController.swift */; };
 		713111612174824900F58BF7 /* ListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 713111602174824900F58BF7 /* ListViewController.swift */; };
 		7136D24B2179C13E00AAF76D /* ExtensionFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7136D24A2179C13D00AAF76D /* ExtensionFile.swift */; };
+		7155C538217EC1F400CDA650 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7155C537217EC1F400CDA650 /* GoogleService-Info.plist */; };
 		719C68E121787E9600F99C99 /* KeyboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 719C68E021787E9600F99C99 /* KeyboardService.swift */; };
 /* End PBXBuildFile section */
 
@@ -41,7 +41,6 @@
 		7100B40321757AB90058BE0F /* listTitleTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = listTitleTableViewCell.swift; sourceTree = "<group>"; };
 		7100B40421757AB90058BE0F /* listTitleTableViewCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = listTitleTableViewCell.xib; sourceTree = "<group>"; };
 		7100B4072175C4E10058BE0F /* Const.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Const.swift; sourceTree = "<group>"; };
-		7100B4092175C5C80058BE0F /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		7100B40B2175D0490058BE0F /* Data.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Data.swift; sourceTree = "<group>"; };
 		713111492174759700F58BF7 /* RandomLunch2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RandomLunch2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7131114C2174759700F58BF7 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -53,6 +52,7 @@
 		7131115E2174823700F58BF7 /* EditViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditViewController.swift; sourceTree = "<group>"; };
 		713111602174824900F58BF7 /* ListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListViewController.swift; sourceTree = "<group>"; };
 		7136D24A2179C13D00AAF76D /* ExtensionFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionFile.swift; sourceTree = "<group>"; };
+		7155C537217EC1F400CDA650 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		719C68E021787E9600F99C99 /* KeyboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardService.swift; sourceTree = "<group>"; };
 		93BCCDCFF00FC31DDCAF918C /* Pods_RandomLunch2.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RandomLunch2.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDC307B6A68CAB6D3529C50B /* Pods-RandomLunch2.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RandomLunch2.release.xcconfig"; path = "Pods/Target Support Files/Pods-RandomLunch2/Pods-RandomLunch2.release.xcconfig"; sourceTree = "<group>"; };
@@ -108,6 +108,7 @@
 		7131114B2174759700F58BF7 /* RandomLunch2 */ = {
 			isa = PBXGroup;
 			children = (
+				7155C537217EC1F400CDA650 /* GoogleService-Info.plist */,
 				7131114C2174759700F58BF7 /* AppDelegate.swift */,
 				713111502174759700F58BF7 /* Main.storyboard */,
 				7131114E2174759700F58BF7 /* ViewController.swift */,
@@ -125,7 +126,6 @@
 				713111552174759E00F58BF7 /* LaunchScreen.storyboard */,
 				713111582174759E00F58BF7 /* Info.plist */,
 				7100B4072175C4E10058BE0F /* Const.swift */,
-				7100B4092175C5C80058BE0F /* GoogleService-Info.plist */,
 				7100B40B2175D0490058BE0F /* Data.swift */,
 				719C68E021787E9600F99C99 /* KeyboardService.swift */,
 				7136D24A2179C13D00AAF76D /* ExtensionFile.swift */,
@@ -198,7 +198,7 @@
 				713111542174759E00F58BF7 /* Assets.xcassets in Resources */,
 				7100B3FA21756F8F0058BE0F /* editItemTableViewCell.xib in Resources */,
 				7100B402217579EB0058BE0F /* mainItemTableViewCell.xib in Resources */,
-				7100B40A2175C5C80058BE0F /* GoogleService-Info.plist in Resources */,
+				7155C538217EC1F400CDA650 /* GoogleService-Info.plist in Resources */,
 				713111522174759700F58BF7 /* Main.storyboard in Resources */,
 				7100B3FE21756FA80058BE0F /* editAddTableViewCell.xib in Resources */,
 			);
