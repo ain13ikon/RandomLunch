@@ -108,6 +108,12 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        self.view.endEditing(true)
+    }
+    
         
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return displayedDataArray.count
@@ -134,6 +140,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         print(vc.nowDataIndex)
         self.dismiss(animated: true, completion: nil)
     }
+
 
     /*
     // MARK: - Navigation

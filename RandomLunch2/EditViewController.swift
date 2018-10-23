@@ -9,6 +9,7 @@
 import UIKit
 import Firebase
 import FirebaseDatabase
+import RealmSwift
 
 class EditViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
@@ -39,6 +40,8 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var newTitleText: String = ""
     var newItemArray: [String] = []
     
+    //ネットワークに繋がっているか
+    var networkFlag: Bool!
     //表示設定データ
     //var keyboardHeight: CGFloat = 260   //仮
     
@@ -75,7 +78,15 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         //入力チェック
         guard check() else {return}
         
-        //データベースに保存
+        /*
+        do{
+            //データベースに保存
+            try? saveToDatabase()
+        }catch{
+            print("エラー！！！！！")
+        }
+        */
+        
         saveToDatabase()
         
         //抽選画面へ戻る
@@ -94,16 +105,40 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func saveToDatabase(){
         print(#function)
-        //保存先の取得
-        let dataRef = Database.database().reference().child(Const.DataPath)
+        //新規登録時
         if dataId == "" {
             print("新規登録")
+            //保存先の取得
+            let dataRef = Database.database().reference().child(Const.DataPath).childByAutoId()
+            dataId = dataRef.key
+            print(dataId)
             //新規登録
-            dataRef.childByAutoId().setValue(["title": newTitleText, "items": newItemArray])
+            dataRef.setValue(
+                ["title": newTitleText, "items": newItemArray],
+                withCompletionBlock: {(error, dataRef) in
+                    if let error = error{
+                        print(error)
+                        print("Realmに予備保存")
+                    }
+            })
+        //編集時
         }else{
+            //保存先の取得
+            let dataRef = Database.database().reference().child(Const.DataPath).child(dataId)
             //上書き
             print("上書き保存")
-            dataRef.child(dataId).updateChildValues(["title": newTitleText, "items": newItemArray])
+            print(dataRef.key)
+            dataRef.updateChildValues(
+                ["title": newTitleText, "items": newItemArray],
+                withCompletionBlock: {(error, dataRef) in
+                    if let error = error{
+                        print(error)
+                        print("Realmに予備保存")
+                    }
+            })
+        }
+        if !networkFlag {
+            reserveRealm()
         }
     }
 
@@ -190,14 +225,18 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         guard let userInfo = notification.userInfo as? [String: Any] else {
             return
         }
-        guard let keyboardInfo = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue else {
+        guard let keyboardInfo = userInfo[UIResponder.keyboardFrameBeginUserInfoKey] as? NSValue else {
             return
         }
         
         let keyboardSize = keyboardInfo.cgRectValue.height
         print("キーボードの高さ")
         print(keyboardSize)
-        //constantTableViewBottom.constant = CGFloat(keyboardSize)
+        constantTableViewBottom.constant = CGFloat(keyboardSize + 40)
+    }
+    
+    @objc private func keyboardWillHide(_ notification: Notification){
+        constantTableViewBottom.constant = 20
     }
     
     override func viewDidLoad() {
@@ -220,23 +259,45 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         //キーボードの高さに合わせてtableViewの位置を調整
         //constantTableViewBottom.constant = keyboardHeight
         
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(keyboardWillShow(_:)),
-            name: UIResponder.keyboardWillShowNotification,
-            object: nil
-        )
+        //オンライン状態を監視
+        let connectedRef = Database.database().reference(withPath: ".info/connected")
+        connectedRef.observe(.value, with: { snapshot in
+            if snapshot.value as? Bool ?? false {
+                print("Connected")
+                self.networkFlag = true
+            } else {
+                print("Not connected")
+                self.networkFlag = false
+            }
+        })
+        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         print("edit appear")
+    
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow(_:)),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide(_:)),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+
         
         //キーボードの高さに合わせてtableViewの位置を調整
-        let keyboardHeight = KeyboardService.keyboardHeight()
-        print("keyboardの高さ：\(keyboardHeight)")
-        constantTableViewBottom.constant = keyboardHeight + 40
+        //let keyboardHeight = KeyboardService.keyboardHeight()
+        //print("keyboardの高さ：\(keyboardHeight)")
+        //constantTableViewBottom.constant = keyboardHeight + 40
         /*メモ：
          viewWillAppearメソッドからこれを呼び出します。
          viewDidLoadで呼び出されるべきではありません。
@@ -256,6 +317,25 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.reloadData()
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        print(#function)
+        super.viewWillDisappear(animated)
+        
+        self.view.endEditing(true)
+        
+        NotificationCenter.default.removeObserver(
+            self,
+            name: UIResponder.keyboardWillShowNotification,
+            object: self.view.window
+        )
+        
+        NotificationCenter.default.removeObserver(
+            self,
+            name: UIResponder.keyboardWillHideNotification,
+            object: self.view.window
+        )
+    }
+    
     func numberOfSections(in tableView: UITableView) -> Int {
         return 2    //section0:アイテム入力欄、section1:追加ボタン
     }
@@ -272,6 +352,9 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         if indexPath.section == 0 {
             print("indexPath.row:\(indexPath.row)")
             let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell") as! editItemTableViewCell
+            if indexPath.row == 0 {
+                cell.itemTextField.placeholder = "３０文字まで"
+            }
             if let text = keepText.keepArray[indexPath.row] {
                 cell.itemTextField.text = text
             }else{
@@ -306,6 +389,32 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.reloadData()
     }
 
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.view.endEditing(true)
+    }
+    
+    
+    func reserveRealm(){
+        print("Realmに予備保存")
+        let data = RealmData()
+        data.id = dataId
+        data.title = newTitleText
+        for value in newItemArray{
+            let subData = RealmItemData()
+            subData.item = value
+            data.items.append(subData)
+        }
+        
+        let realm = try! Realm()
+        try! realm.write {
+            realm.add(data)
+        }
+        
+        let keep = realm.objects(RealmData.self)
+        print(keep)
+    }
+
+    
     /*
     // MARK: - Navigation
 

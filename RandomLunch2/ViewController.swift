@@ -9,8 +9,14 @@
 import UIKit
 import Firebase
 import FirebaseDatabase
+import RealmSwift
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    
+    
+    //表示用データ
+    let requiredHeight: CGFloat = 320 //ディスプレイ（くじ内容の表示）以外で確保したい高さの見積もり
+    var displayHeight: CGFloat = 200 //テキトウな初期値
     
     var dataArray: [Data] = []  //Firebaseから取ってきた全てのデータ
     var nowDataIndex: Int = 0   //現在使用中のデータのインデックス
@@ -19,6 +25,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var dataId: String = ""
     var dataTitle: String = ""
     var dataItems: [String] = []
+    
+    //通信状態
+    var networkFlag: Bool = false
     
     var itemAddNum = 5           //(EditVCで)初期表示＆一度に追加するアイテムの数
     @IBOutlet weak var titleLabel: UILabel!
@@ -30,6 +39,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet weak var deleteButton: UIButton!
     @IBOutlet weak var choiceButton: UIButton!
     
+    @IBOutlet weak var displayHeightConstant: NSLayoutConstraint!
     
     deinit {
         print("View deinit")
@@ -59,6 +69,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         print(#function)
         let choicedNum = Int(arc4random_uniform(UInt32(dataItems.count)))
         
+        resultLabel.adjustsFontSizeToFitWidth = true
         resultLabel.text = dataItems[choicedNum]
         resultLabel.isHidden = false
         
@@ -83,6 +94,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         //リロード
         myReload()
     }
+    
     func showAlert(){
         let title = "「\(dataTitle)」の削除"
         let message = "データを削除しますか？"
@@ -198,6 +210,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         resultLabel.isHidden = true
     }
 
+    func adjustHeight(){
+        let height = view.frame.size.height
+        displayHeight = height / 2
+        if height - displayHeight < requiredHeight {
+            displayHeight = height - requiredHeight
+        }
+        
+        print("frame:\(height) display:\(displayHeight)")
+        
+        displayHeightConstant.constant = displayHeight
+    }
     
     func setFireObserve(){
         let dataRef = Database.database().reference().child(Const.DataPath)
@@ -239,6 +262,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let nib = UINib(nibName: "mainItemTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "itemCell")
         
+        realmCheck()
+        
+        checkNet()
         setFireObserve()
 
     }
@@ -247,6 +273,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewWillAppear(animated)
         
         print(#function)
+       
+        adjustHeight()
         
         myReload()
     }
@@ -262,47 +290,75 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
 
-
-}
-
-
-
-
-private var maxLengths = [UITextField: Int]()
-
-extension UITextField {
-    
-    @IBInspectable var maxLength: Int {
-        get {
-            guard let length = maxLengths[self] else {
-                return Int.max
+    func checkNet(){
+        print("checkNet")
+        let connectedRef = Database.database().reference(withPath: ".info/connected")
+        connectedRef.observe(.value, with: { snapshot in
+            if snapshot.value as? Bool ?? false {
+                print("Connected")
+                self.networkFlag = true
+            } else {
+                print("Not connected")
+                self.networkFlag = false
+                //１秒待ってもネット接続がされなければアラートを表示（最初の接続時にNot connected→Connectedになるため）
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    if !self.networkFlag {
+                        print("ネットに接続してください")
+                        self.showAlert2()
+                    }
+                }
             }
-            
-            return length
-        }
-        set {
-            maxLengths[self] = newValue
-            addTarget(self, action: #selector(limitLength), for: .editingChanged)
-        }
+        })
     }
     
-    @objc func limitLength(textField: UITextField) {
-        guard let prospectiveText = textField.text, prospectiveText.count > maxLength else {
-            return
-        }
+    
+    func showAlert2(){
+        let title = "ネットワークエラー"
+        let message = "接続を確認してください。"
+        let alertController:UIAlertController =
+            UIAlertController(title: title,
+                              message: message,
+                              preferredStyle: .alert)
         
-        let selection = selectedTextRange
-        let maxCharIndex = prospectiveText.index(prospectiveText.startIndex, offsetBy: maxLength)
+        // Default のaction
+        let defaultAction:UIAlertAction = UIAlertAction(
+            title: "OK",
+            style: .default,
+            handler:{(action:UIAlertAction!) -> Void in
+                print("\(String(action.title!))がタップされました")
+        })
         
-        //#if swift(>=4.0)
-        text = String(prospectiveText[..<maxCharIndex])
-        /*
-        #else
-        text = prospectiveText.substring(to: maxCharIndex)
-        #endif
-        */
+        // actionを追加
+        alertController.addAction(defaultAction)
         
-        selectedTextRange = selection
+        // UIAlertControllerの起動
+        present(alertController, animated: true, completion: nil)
     }
+    
+    func realmCheck(){
+        let realm = try! Realm()
+        let datas = realm.objects(RealmData.self)
+        for value in datas{
+            let id = value.id!
+            let title = value.title!
+            let itemList = value.items
+            var items: [String] = []
+            
+            for value2 in itemList{
+                items.append(value2.item!)
+            }
+            print(id)
+            print(title)
+            print(items)
+            
+            //データベースに保存
+            //保存できたらRealmのデータを削除↓
+            try! realm.write {
+                //realm.delete(value)
+            }
+        }
+    }
+
     
 }
+

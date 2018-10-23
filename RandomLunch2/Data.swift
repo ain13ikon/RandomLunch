@@ -9,6 +9,7 @@
 import Foundation
 import Firebase
 import FirebaseDatabase
+import RealmSwift
 
 class Data: NSObject {
     var id: String?
@@ -48,4 +49,14 @@ class TextFieldKeepData: NSObject {
         }
     }
     
+}
+
+class RealmData: Object {
+    @objc dynamic var id: String?
+    @objc dynamic var title: String?
+    let items = List<RealmItemData>()
+}
+
+class RealmItemData: Object {
+    @objc dynamic var item: String?
 }
