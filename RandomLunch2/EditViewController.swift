@@ -20,7 +20,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     //仕様データ
     var defaultNum = 5 //初期表示するアイテム欄の数
     var addItemNum = 5 //追加ボタンを押した時に、一度に追加するアイテム欄の数
-    var displayNum = 0 //現在表示しているアイテム欄の数
+    var itemColumnNum = 0 //現在表示しているアイテム欄の数
     var maxItemNum = 30 //アイテム欄の最大数
     
     //textFieldの入力内容を一時保管するための変数・配列
@@ -28,7 +28,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var editingIndex: Int?           //入力中のセルインデックスをキープする
     var editingTextField: UITextField?  //入力中のtextFieldオブジェクトをキープする
 
-    var titleArray: [String] = []
+//    var titleArray: [String] = []
     
     //ViewControllerから画面遷移時に送られるデータ
     var segue: String = ""
@@ -42,9 +42,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     //ネットワークに繋がっているか
     var networkFlag: Bool!
-    //表示設定データ
-    //var keyboardHeight: CGFloat = 260   //仮
-    
     
     deinit {
         print("Edit deinit")
@@ -64,8 +61,8 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         //アイテムの読み取り
         newItemArray = []
-        print(displayNum)
-        for i in 0..<displayNum {
+        print(itemColumnNum)
+        for i in 0..<itemColumnNum {
             print(i)
             if let text = keepText.keepArray[i] {
                 newItemArray.append(text)
@@ -105,6 +102,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func saveToDatabase(){
         print(#function)
+        
         //新規登録時
         if dataId == "" {
             print("新規登録")
@@ -118,7 +116,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
                 withCompletionBlock: {(error, dataRef) in
                     if let error = error{
                         print(error)
-                        print("Realmに予備保存")
                     }
             })
         //編集時
@@ -133,7 +130,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
                 withCompletionBlock: {(error, dataRef) in
                     if let error = error{
                         print(error)
-                        print("Realmに予備保存")
                     }
             })
         }
@@ -195,7 +191,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         print("セルを操作中：\(indexPath.row)")
     }
     
-    //入力中のセルインデックスとテキストフィールドオブジェクトをグローバル変数に一時保管する
+    //入力中のセルインデックスとテキストフィールドオブジェクトをクラス変数に一時保管する
     func textFieldDidBeginEditing(_ textField: UITextField) {
         print("入力開始時に呼び出し")
         //入力されたtextFieldが存在するセルを取得して、セルが存在するindexを取得
@@ -342,7 +338,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
-            return displayNum
+            return itemColumnNum
         }else{
             return 1
         }
@@ -352,20 +348,26 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         if indexPath.section == 0 {
             print("indexPath.row:\(indexPath.row)")
             let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell") as! editItemTableViewCell
+            
+            //プレスホルダーを設定
             if indexPath.row == 0 {
                 cell.itemTextField.placeholder = "３０文字まで"
+            }else{
+                cell.itemTextField.placeholder = ""
             }
+            //テキストを設定
             if let text = keepText.keepArray[indexPath.row] {
                 cell.itemTextField.text = text
             }else{
                 cell.itemTextField.text = ""
             }
+            
             cell.itemTextField.delegate = self
             return cell
         }else{
             let cell = tableView.dequeueReusableCell(withIdentifier: "addCell", for: indexPath) as! editAddTableViewCell
             cell.addButton.addTarget(self, action:#selector(handleTapAddButton), for: .touchUpInside)
-            if displayNum >= maxItemNum {
+            if itemColumnNum >= maxItemNum {
                 cell.addButton.isEnabled = false
             }
             
@@ -376,14 +378,14 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     @objc func handleTapAddButton(){
         keepTextField()
         
-        if displayNum >= maxItemNum {
+        if itemColumnNum >= maxItemNum {
             return
         }
         
-        displayNum += addItemNum
+        itemColumnNum += addItemNum
         
-        if displayNum > maxItemNum {
-            displayNum = maxItemNum
+        if itemColumnNum > maxItemNum {
+            itemColumnNum = maxItemNum
         }
         
         tableView.reloadData()
@@ -395,6 +397,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     
     func reserveRealm(){
+        guard global_offLineServiceFlag else{return}
         print("Realmに予備保存")
         let data = RealmData()
         data.id = dataId

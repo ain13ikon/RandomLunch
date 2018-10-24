@@ -11,8 +11,10 @@ import Firebase
 import FirebaseDatabase
 import RealmSwift
 
+var global_offLineServiceFlag = false   //オフライン時にコード上でRealm処理をするか ※順番が競合することがある
+//var global_networkFlag = false  //ネットワークに繋がっているか
+
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
-    
     
     //表示用データ
     let requiredHeight: CGFloat = 320 //ディスプレイ（くじ内容の表示）以外で確保したい高さの見積もり
@@ -26,19 +28,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var dataTitle: String = ""
     var dataItems: [String] = []
     
-    //通信状態
-    var networkFlag: Bool = false
+    var networkFlag: Bool = false   //通信状態
+    let realm = try! Realm()        //Realmインスタンスの取得
+    //var itemAddNum = 5              //(EditVCで)初期表示＆一度に追加するアイテムの数
     
-    var itemAddNum = 5           //(EditVCで)初期表示＆一度に追加するアイテムの数
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var resultLabel: UILabel!
-    
     @IBOutlet weak var listButton: UIButton!
     @IBOutlet weak var editButton: UIButton!
     @IBOutlet weak var deleteButton: UIButton!
     @IBOutlet weak var choiceButton: UIButton!
-    
     @IBOutlet weak var displayHeightConstant: NSLayoutConstraint!
     
     deinit {
@@ -62,43 +62,28 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     @IBAction func tapDeleteButton(_ sender: Any) {
         print(#function)
-        showAlert()
+        showDeleteAlert()
     }
     
+    //抽選を行い、結果をラベルに表示する
     @IBAction func tapChoiceButton(_ sender: Any) {
         print(#function)
         let choicedNum = Int(arc4random_uniform(UInt32(dataItems.count)))
         
-        resultLabel.adjustsFontSizeToFitWidth = true
         resultLabel.text = dataItems[choicedNum]
         resultLabel.isHidden = false
         
+        //結果をアニメーション表示
         resultLabel.alpha = 0.0
-        UIView.animate(withDuration: 1.0, animations: {
-                        self.resultLabel.alpha = 1.0
-        })
-    }
-    
-    func deleteAction(){
-        //データベースから削除
-        Database.database().reference().child(Const.DataPath).child(self.dataId).removeValue()
-        
-        //dataArrayの更新
-        self.dataArray.remove(at: nowDataIndex)
-        
-        //nowDataIndexの更新
-        if nowDataIndex > 0 && nowDataIndex >= dataArray.count {
-            nowDataIndex -= 1
+        UIView.animate(withDuration: 1.0){
+            self.resultLabel.alpha = 1.0
         }
-        
-        //リロード
-        myReload()
     }
     
-    func showAlert(){
+    func showDeleteAlert(){
         let title = "「\(dataTitle)」の削除"
         let message = "データを削除しますか？"
-        let alertController:UIAlertController =
+        let alertController: UIAlertController =
             UIAlertController(title: title,
                               message: message,
                               preferredStyle: .alert)
@@ -109,7 +94,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             style: .default,
             handler:{(action:UIAlertAction!) -> Void in
                 print("\(String(action.title!))がタップされました")
-                self.deleteAction()
+                self.deletefunction()
         })
         
         // Destructive のaction
@@ -128,13 +113,42 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         present(alertController, animated: true, completion: nil)
     }
 
-    func adjustDisplayNum() -> Int {
-        let num = dataItems.count % 5
-        if num == 0 {
-            return dataItems.count
-        } else {
-            return dataItems.count + (5 - num)
+    func deletefunction(){
+        //データベースから削除
+        Database.database().reference().child(Const.DataPath).child(self.dataId).removeValue()
+        //オフライン時に更新内容を予備保存
+        if global_offLineServiceFlag && !networkFlag {
+            print("削除データを予備保存")
+            let data = RealmDeleteData()
+            data.id = dataId
+            try! realm.write {
+                realm.add(data)
+            }
         }
+        //dataArrayの更新
+        self.dataArray.remove(at: nowDataIndex)
+        
+        //nowDataIndexの更新
+        if nowDataIndex > 0 && nowDataIndex >= dataArray.count {
+            nowDataIndex -= 1
+        }
+        //リロード
+        myReload()
+    }
+    
+    //編集画面(EditVC)に表示するアイテム欄の数を調整する
+    func adjustItemColumnNum(_ defaultNum: Int, _ addNum: Int) -> Int {
+        var i = 0
+        while dataItems.count > defaultNum + addNum * i{
+            i += 1
+            //ストッパー
+            if i > 100 {
+                print("エラー発生：\(#function)")
+                break
+            }
+        }
+        print("num: \(defaultNum + addNum * i)")
+        return defaultNum + addNum * i
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -144,15 +158,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataId = ""
             editVC.dataTitle = ""
             editVC.dataItems = []
-            editVC.displayNum = editVC.defaultNum
+            editVC.itemColumnNum = editVC.defaultNum
         }else if segue.identifier == "editSegue" {
             let editVC = segue.destination as! EditViewController
             editVC.segue = "edit"
             editVC.dataId = dataId
             editVC.dataTitle = dataTitle
             editVC.dataItems = dataItems
-            editVC.displayNum = adjustDisplayNum()
-            print(adjustDisplayNum())
+            editVC.itemColumnNum = adjustItemColumnNum(editVC.defaultNum, editVC.addItemNum)
         }else if segue.identifier == "listSegue" {
             let listVC = segue.destination as! ListViewController
             listVC.dataArray = dataArray
@@ -160,8 +173,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
     }
     
-    
-    func setData(){
+    //現在表示中のデータを変数に保管する
+    func setNowData(){
         if dataArray.count > nowDataIndex{
             dataId = dataArray[nowDataIndex].id ?? ""
             dataTitle = dataArray[nowDataIndex].title ?? ""
@@ -187,46 +200,43 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if nowDataIndex < 0 {
             nowDataIndex = 0
         }
+        //ボタン等の操作の有効・無効
         if availableCheck() {
-            //有効に
+            //有効にする
             listButton.isEnabled = true
             editButton.isEnabled = true
             deleteButton.isEnabled = true
             choiceButton.isEnabled = true
         }else{
-            //ボタン等の操作を無効に
+            //無効にする
             listButton.isEnabled = false
             editButton.isEnabled = false
             deleteButton.isEnabled = false
             choiceButton.isEnabled = false
         }
-        setData()
-        print(dataTitle)
-        print(dataItems)
-        
+        setNowData()
         titleLabel.text = dataTitle
-        tableView.reloadData()
-        
         resultLabel.isHidden = true
+        
+        tableView.reloadData()
     }
 
+    //ディスプレイの高さを端末の画面サイズを元に調整する
     func adjustHeight(){
         let height = view.frame.size.height
         displayHeight = height / 2
         if height - displayHeight < requiredHeight {
             displayHeight = height - requiredHeight
         }
-        
-        print("frame:\(height) display:\(displayHeight)")
-        
         displayHeightConstant.constant = displayHeight
     }
     
+    //Firebaseのobserveイベントを設定する
     func setFireObserve(){
         let dataRef = Database.database().reference().child(Const.DataPath)
         dataRef.observe(.childAdded, with: {snapshot in
             print("データの追加")
-            print(snapshot)
+            //dataArrayにデータを追加する
             let data = Data(snapshot)
             self.dataArray.insert(data, at: 0)
             
@@ -234,6 +244,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         })
         dataRef.observe(.childChanged, with: {snapshot in
             print("データの更新")
+            //dataArrayから旧データを取り除き、更新データを追加する
             let data = Data(snapshot)
             for data_ in self.dataArray {
                 if data_.id == data.id {
@@ -245,11 +256,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             }
             self.myReload()
         })
-        dataRef.observe(.childRemoved, with: {snapshot in
-            
-        })
     }
-
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -257,15 +264,27 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.delegate = self
         tableView.dataSource = self
-        
         //セルのnib取得
         let nib = UINib(nibName: "mainItemTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "itemCell")
         
-        realmCheck()
+        /*
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(closeApp(_:)),
+            name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+        */
         
-        checkNet()
-        setFireObserve()
+        adjustHeight()
+        resultLabel.adjustsFontSizeToFitWidth = true
+
+        self.setObserveCheckNet()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5){
+            self.setFireObserve()
+            self.realmCheck()
+        }
 
     }
     
@@ -273,9 +292,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewWillAppear(animated)
         
         print(#function)
-       
-        adjustHeight()
-        
         myReload()
     }
     
@@ -290,7 +306,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         return cell
     }
 
-    func checkNet(){
+    func setObserveCheckNet(){
         print("checkNet")
         let connectedRef = Database.database().reference(withPath: ".info/connected")
         connectedRef.observe(.value, with: { snapshot in
@@ -300,11 +316,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             } else {
                 print("Not connected")
                 self.networkFlag = false
-                //１秒待ってもネット接続がされなければアラートを表示（最初の接続時にNot connected→Connectedになるため）
+                //１秒待ってもネット接続がされなければアラートを表示（最初の接続時にNot connected→Connectedになるため少し待つ）
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                     if !self.networkFlag {
-                        print("ネットに接続してください")
-                        self.showAlert2()
+                        self.showNetworkAlert()
                     }
                 }
             }
@@ -312,14 +327,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     
-    func showAlert2(){
-        let title = "ネットワークエラー"
-        let message = "接続を確認してください。"
+    func showNetworkAlert(){
+        let title = "ネットに接続できません"
+        let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
         let alertController:UIAlertController =
             UIAlertController(title: title,
                               message: message,
                               preferredStyle: .alert)
-        
         // Default のaction
         let defaultAction:UIAlertAction = UIAlertAction(
             title: "OK",
@@ -327,7 +341,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             handler:{(action:UIAlertAction!) -> Void in
                 print("\(String(action.title!))がタップされました")
         })
-        
         // actionを追加
         alertController.addAction(defaultAction)
         
@@ -336,29 +349,71 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func realmCheck(){
-        let realm = try! Realm()
-        let datas = realm.objects(RealmData.self)
-        for value in datas{
-            let id = value.id!
-            let title = value.title!
-            let itemList = value.items
-            var items: [String] = []
+        guard global_offLineServiceFlag else {return}
+        manualUpdateFirebase()
+        manualDeleteFirebase()
+    }
+    
+    func manualDeleteFirebase(){
+        let datas = realm.objects(RealmDeleteData.self)
+        print(datas)
+        
+        for value in datas {
+            guard networkFlag else{continue}
             
-            for value2 in itemList{
-                items.append(value2.item!)
-            }
-            print(id)
-            print(title)
-            print(items)
+            print("予備データをデータベースから削除します")
+            Database.database().reference().child(Const.DataPath).child(value.id).removeValue()
             
-            //データベースに保存
-            //保存できたらRealmのデータを削除↓
             try! realm.write {
-                //realm.delete(value)
+                realm.delete(value)
             }
         }
     }
+    
+    func manualUpdateFirebase(){
+        let datas = realm.objects(RealmData.self)
+        print(datas)
 
+        for value in datas{
+            let id = value.id!
+            let title = value.title!
+            let items = setItemsArrayFromRealm(value.items)
+            
+            guard networkFlag else {continue}
+            
+            //データベースに保存
+            print("予備データをデータベースへ保存します")
+            let dataRef = Database.database().reference().child(Const.DataPath).child(id)
+            dataRef.setValue(
+                ["title": title, "items": items],
+                withCompletionBlock: {(error, dataRef) in
+                    if let error = error{
+                        print(error)
+                    }
+            })
+            
+            //保存できたらRealmのデータを削除
+            try! realm.write {
+                realm.delete(value)
+            }
+        }
+        
+    }
+
+    func setItemsArrayFromRealm(_ itemList: List<RealmItemData>) -> [String]{
+        var items: [String] = []
+        for value in itemList{
+            items.append(value.item!)
+        }
+        return items
+    }
+
+    //未使用
+    @objc func closeApp(_ notification: Notification){
+        print("アプリが終了します")
+        //print(text)
+        
+    }
     
 }
 

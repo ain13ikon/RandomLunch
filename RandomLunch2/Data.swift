@@ -60,3 +60,7 @@ class RealmData: Object {
 class RealmItemData: Object {
     @objc dynamic var item: String?
 }
+
+class RealmDeleteData: Object {
+    @objc dynamic var id: String = ""
+}
