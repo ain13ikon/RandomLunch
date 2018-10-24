@@ -39,7 +39,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         for data_ in dataArray {
             if data_.title!.contains(searchWord) {
                 resultArray.append(data_)
-            }else if data_.items!.contains(searchWord) {
+            }else if partialMatchInArray(searchWord, data_.items!){
                 resultArray.append(data_)
             }
         }
@@ -51,6 +51,16 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         return resultArray
     }
 
+    //配列に含まれるか（部分一致）
+    func partialMatchInArray(_ keyword: String, _ array: [String]) -> Bool{
+        for value in array{
+            if value.contains(keyword){
+                return true
+            }
+        }
+        return false
+    }
+    
     // 検索欄入力開始前に呼ばれる
     func searchBarShouldBeginEditing(_ searchBar: UISearchBar) -> Bool {
         print("検索欄の表示変更")
@@ -69,7 +79,14 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     //入力途中に呼ばれる
     func searchBar(_ searchBar: UISearchBar, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         print("入力途中")
-        displayedDataArray = search(searchBar.text! + text)
+        print("text: \(text)")
+        print("searchBar.text: \(searchBar.text!)")
+        var searchText = searchBar.text! + text
+        if text == "" {
+            searchText = String(searchText.dropLast())
+        }
+        print("searchText: \(searchText)")
+        displayedDataArray = search(searchText)
         tableView.reloadData()
         return true
     }
@@ -78,6 +95,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         self.view.endEditing(true)
         searchBar.showsCancelButton = true
+        print(searchBar.text!)
         displayedDataArray = search(searchBar.text!)
         tableView.reloadData()
     }
