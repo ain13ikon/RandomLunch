@@ -20,8 +20,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     let requiredHeight: CGFloat = 320 //ディスプレイ（くじ内容の表示）以外で確保したい高さの見積もり
     var displayHeight: CGFloat = 200 //テキトウな初期値
     
-    var dataArray: [Data] = []  //Firebaseから取ってきた全てのデータ
-    var nowDataIndex: Int = 0   //現在使用中のデータのインデックス
+    var dataArray: [Data] = []      //Firebaseから取ってきた全てのデータ
+    var titleArray: [String] = []   //未使用データ
+    var nowDataIndex: Int = 0       //現在使用中のデータのインデックス
 
     //現在使用中のデータ
     var dataId: String = ""
@@ -30,7 +31,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     var networkFlag: Bool = false   //通信状態
     let realm = try! Realm()        //Realmインスタンスの取得
-    //var itemAddNum = 5              //(EditVCで)初期表示＆一度に追加するアイテムの数
+    var availableFlag = false  //使用可能なデータがあるか
+    
     
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
@@ -159,6 +161,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataTitle = ""
             editVC.dataItems = []
             editVC.itemColumnNum = editVC.defaultNum
+            editVC.titleArray = titleArray
         }else if segue.identifier == "editSegue" {
             let editVC = segue.destination as! EditViewController
             editVC.segue = "edit"
@@ -166,6 +169,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataTitle = dataTitle
             editVC.dataItems = dataItems
             editVC.itemColumnNum = adjustItemColumnNum(editVC.defaultNum, editVC.addItemNum)
+            editVC.titleArray = titleArray
         }else if segue.identifier == "listSegue" {
             let listVC = segue.destination as! ListViewController
             listVC.dataArray = dataArray
@@ -189,8 +193,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     
     func availableCheck() -> Bool {
         if dataArray.count > 0 {
+            availableFlag = true
             return true
         }else{
+            availableFlag = false
             return false
         }
     }
@@ -239,6 +245,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             //dataArrayにデータを追加する
             let data = Data(snapshot)
             self.dataArray.insert(data, at: 0)
+            self.titleArray.append(data.title!)
             
             self.myReload()
         })
@@ -251,6 +258,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     let index = self.dataArray.index(of: data_)!
                     self.dataArray.remove(at: index)
                     self.dataArray.insert(data, at: index)
+                    
+                    let num = self.titleArray.index(of: data_.title!)!
+                    print(self.titleArray)
+                    print(num)
+                    self.titleArray.remove(at: num)
+                    self.titleArray.insert(data.title!, at: num)
                     break
                 }
             }
@@ -264,9 +277,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.allowsSelection = false
+        
         //セルのnib取得
         let nib = UINib(nibName: "mainItemTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "itemCell")
+        let nib2 = UINib(nibName: "noneTableViewCell", bundle: nil)
+        tableView.register(nib2, forCellReuseIdentifier: "noneCell")
         
         /*
         NotificationCenter.default.addObserver(
@@ -279,6 +296,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         adjustHeight()
         resultLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.adjustsFontSizeToFitWidth = true
 
         self.setObserveCheckNet()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5){
@@ -296,14 +314,27 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dataItems.count
+        if availableFlag {
+            return dataItems.count
+        }else{
+            return 1
+        }
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell", for: indexPath) as! mainItemTableViewCell
-        cell.itemLabel.text = "・" + dataItems[indexPath.row]
-        
-        return cell
+        if availableFlag {
+            //くじデータがある場合
+            let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell", for: indexPath) as! mainItemTableViewCell
+            cell.itemLabel.text = "・" + dataItems[indexPath.row]
+            return cell
+        }else{
+            //くじデータがない場合
+            let cell = tableView.dequeueReusableCell(withIdentifier: "noneCell", for: indexPath) as! noneTableViewCell
+            cell.createButton.addTarget(self, action: #selector(xxx) , for: .touchUpInside)
+            //cell.createButton.addTarget(self, action:#selector(tapCreateButton), for: .touchUpInside)
+            
+            return cell
+        }
     }
 
     func setObserveCheckNet(){
@@ -415,5 +446,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
     }
     
+    @objc func xxx(){
+        print("呼ばれました")
+        print(#function)
+        self.performSegue(withIdentifier: "newSegue", sender: nil)
+    }
 }
 

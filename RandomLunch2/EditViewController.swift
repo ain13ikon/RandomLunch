@@ -35,6 +35,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var dataId: String = ""
     var dataTitle: String = ""
     var dataItems: [String] = []
+    var titleArray: [String] = []   //未使用データ
     
     //データベースに保存する新しいデータ
     var newTitleText: String = ""
@@ -200,7 +201,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
             let indexPath = tableView.indexPath(for: cell){
             editingIndex = indexPath.row
             editingTextField = textField
-            print(editingIndex)
+            print(editingIndex!)
         }
     }
     
