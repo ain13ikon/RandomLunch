@@ -330,7 +330,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }else{
             //くじデータがない場合
             let cell = tableView.dequeueReusableCell(withIdentifier: "noneCell", for: indexPath) as! noneTableViewCell
-            cell.createButton.addTarget(self, action: #selector(xxx) , for: .touchUpInside)
+            cell.createButton.addTarget(self, action: #selector(tapCreateButton), for: .touchUpInside)
             //cell.createButton.addTarget(self, action:#selector(tapCreateButton), for: .touchUpInside)
             
             return cell
@@ -446,7 +446,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
     }
     
-    @objc func xxx(){
+    @objc func tapCreateButton(){
         print("呼ばれました")
         print(#function)
         self.performSegue(withIdentifier: "newSegue", sender: nil)
