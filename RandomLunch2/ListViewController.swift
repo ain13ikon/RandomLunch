@@ -71,7 +71,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     //入力確定後に呼ばれる
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         print("入力確定")
-        print(searchBar.text!)
+        print("searchBar.text: \(searchBar.text!)")
+        print("searchText: \(searchText)")
         displayedDataArray = search(searchBar.text!)
         tableView.reloadData()
     }
@@ -83,6 +84,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         print("searchBar.text: \(searchBar.text!)")
         var searchText = searchBar.text! + text
         if text == "" {
+            let kari = searchText.dropLast()
+            print("kari: \(kari)")
             searchText = String(searchText.dropLast())
         }
         print("searchText: \(searchText)")
@@ -94,7 +97,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     // 検索キーが押された時に呼ばれる
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         self.view.endEditing(true)
-        searchBar.showsCancelButton = true
+        //searchBar.showsCancelButton = false
         print(searchBar.text!)
         displayedDataArray = search(searchBar.text!)
         tableView.reloadData()
