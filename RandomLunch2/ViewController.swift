@@ -32,7 +32,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var networkFlag: Bool = false   //通信状態
     let realm = try! Realm()        //Realmインスタンスの取得
     var availableFlag = false  //使用可能なデータがあるか
-    
+    var resultLabelDefaultPosition: CGFloat!
     
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
@@ -42,6 +42,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet weak var deleteButton: UIButton!
     @IBOutlet weak var choiceButton: UIButton!
     @IBOutlet weak var displayHeightConstant: NSLayoutConstraint!
+    //@IBOutlet weak var resultConstant: NSLayoutConstraint!
     
     deinit {
         print("View deinit")
@@ -77,8 +78,10 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
         //結果をアニメーション表示
         resultLabel.alpha = 0.0
+//        resultLabel.center.y -= 50.0
         UIView.animate(withDuration: 1.0){
             self.resultLabel.alpha = 1.0
+//            self.resultLabel.center.y += 50.0
         }
     }
     
@@ -213,12 +216,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editButton.isEnabled = true
             deleteButton.isEnabled = true
             choiceButton.isEnabled = true
+            editButton.alpha = 1.0
+            deleteButton.alpha = 1.0
+            choiceButton.alpha = 1.0
         }else{
             //無効にする
             listButton.isEnabled = false
             editButton.isEnabled = false
             deleteButton.isEnabled = false
             choiceButton.isEnabled = false
+            editButton.alpha = 0.5
+            deleteButton.alpha = 0.5
+            choiceButton.alpha = 0.3
         }
         setNowData()
         titleLabel.text = dataTitle
@@ -299,10 +308,12 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         titleLabel.adjustsFontSizeToFitWidth = true
 
         self.setObserveCheckNet()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5){
+//        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0){
             self.setFireObserve()
-            self.realmCheck()
-        }
+//            self.realmCheck()
+//        }
+        
+        resultLabelDefaultPosition = self.resultLabel.center.y
 
     }
     
@@ -348,7 +359,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                 print("Not connected")
                 self.networkFlag = false
                 //１秒待ってもネット接続がされなければアラートを表示（最初の接続時にNot connected→Connectedになるため少し待つ）
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                     if !self.networkFlag {
                         self.showNetworkAlert()
                     }
