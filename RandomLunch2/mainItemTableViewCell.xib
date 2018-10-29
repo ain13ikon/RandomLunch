@@ -20,15 +20,15 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="o4A-O5-TXt">
-                        <rect key="frame" x="27" y="2" width="288" height="172.5"/>
+                        <rect key="frame" x="23" y="2" width="292" height="172.5"/>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="・" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="U9G-pY-A4U">
-                        <rect key="frame" x="5" y="2" width="20" height="172.5"/>
+                        <rect key="frame" x="5" y="2" width="16" height="172.5"/>
                         <constraints>
-                            <constraint firstAttribute="width" constant="20" id="g2m-gM-qrA"/>
+                            <constraint firstAttribute="width" constant="16" id="g2m-gM-qrA"/>
                         </constraints>
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="textColor"/>

@@ -10,5 +10,4 @@ import Foundation
 
 struct Const {
     static let DataPath = "datas"
-    static let TitlePath = "titles"
 }

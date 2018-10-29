@@ -60,17 +60,3 @@ class UnsavedData: NSObject{
         self.title = title
     }
 }
-
-class RealmData: Object {
-    @objc dynamic var id: String?
-    @objc dynamic var title: String?
-    let items = List<RealmItemData>()
-}
-
-class RealmItemData: Object {
-    @objc dynamic var item: String?
-}
-
-class RealmDeleteData: Object {
-    @objc dynamic var id: String = ""
-}

@@ -16,9 +16,8 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var unsavedLabel: UILabel!
     
-    var dataArray: [Data] = []
-    var displayedDataArray: [Data] = []
-    var unsavedTitleArray: [String] = []
+    var dataArray: [Data] = []              //全てのデータ
+    var displayedDataArray: [Data] = []     //表示するデータ(検索にヒットしたデータ)
     
     deinit {
         print("List deinit")
@@ -123,11 +122,18 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         tableView.delegate = self
         tableView.dataSource = self
         searchBar.delegate = self
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refreshControlValueChanged(sender:)), for: .valueChanged)
+        tableView.addSubview(refreshControl)
+        
+        //tableView.addSubview(refreshControl)
+        
         
         //セルのnib取得
         let nib = UINib(nibName: "listTitleTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "titleCell")
-        //setObserveCheckNet()
+        
+        unsavedLabel.textColor = UIColor.orange
         
     }
     
@@ -172,24 +178,13 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         print(vc.nowDataIndex)
         self.dismiss(animated: true, completion: nil)
     }
-    
-    func setObserveCheckNet(){
-        print("checkNet")
-        
-        let connectedRef = Database.database().reference(withPath: ".info/connected")
-        connectedRef.observe(.value, with: { snapshot in
-            if snapshot.value as? Bool ?? false {
-                if !global_networkFlag {
-                    global_networkFlag = true
-                }
-            } else {
-                if global_networkFlag {
-                    global_networkFlag = false
-                }
-            }
+
+    @objc func refreshControlValueChanged(sender: UIRefreshControl) {
+        tableView.reloadData()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+            sender.endRefreshing()
         })
     }
-
 
 
     /*

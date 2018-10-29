@@ -11,7 +11,35 @@ import Firebase
 import FirebaseDatabase
 import RealmSwift
 
-var global_offLineServiceFlag = false   //オフライン時にコード上でRealm処理をするか ※順番が競合することがある
+//var global_offLineServiceFlag = false   //オフライン時にコード上でRealm処理をするか ※順番が競合することがある
+
+
+let global_connectedRef =
+    Database.database().reference(withPath: ".info/connected")    //ネットワーク監視用の変数
+
+var global_onlineFlag = false {                //ネットワークフラグを管理し、オフラインならアラートを表示する
+    didSet{
+        if global_onlineFlag{
+            print("オンライン")
+            //アラート表示中ならアラートを消す
+            if let vc = global_getTopViewController() as? UIAlertController{
+                print("アラート中")
+                vc.dismiss(animated: false)
+            }else{
+                print("アラートじゃない")
+            }
+        }else{
+            print("オフライン")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0){
+                if !global_onlineFlag{
+                    global_showNetworkAlert()
+                }
+            }
+
+        }
+    }
+}
+
 var global_unsavedTitleArray: [String] = []     //未保存データのタイトル配列
 var global_unsavedDatas: [UnsavedData] = []{    //未保存データのキュー送信時刻とタイトル
     didSet{
@@ -24,18 +52,6 @@ var global_unsavedDatas: [UnsavedData] = []{    //未保存データのキュー
     }
 }
 
-var global_networkFlag = false {
-    didSet{
-        if global_networkFlag{
-            print("オンライン")
-        }else{
-            print("オフライン")
-            showNetworkAlert()
-        }
-    }
-}  //ネットワークに繋がっているか
-
-let global_connectedRef = Database.database().reference(withPath: ".info/connected")
 
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
@@ -53,12 +69,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var dataTitle: String = ""
     var dataItems: [String] = []
     
-    var networkFlag: Bool = false   //通信状態
-    let realm = try! Realm()        //Realmインスタンスの取得
     var availableFlag = false  //使用可能なデータがあるか
-    var cellCount = 0
-    var unsavedDatas: [String] = []
-    
     
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
@@ -147,15 +158,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func deletefunction(){
         //データベースから削除
         Database.database().reference().child(Const.DataPath).child(self.dataId).removeValue()
-        //オフライン時に更新内容を予備保存
-        if global_offLineServiceFlag && !networkFlag {
-            print("削除データを予備保存")
-            let data = RealmDeleteData()
-            data.id = dataId
-            try! realm.write {
-                realm.add(data)
-            }
-        }
+        
         //dataArrayの更新
         self.dataArray.remove(at: nowDataIndex)
         
@@ -191,7 +194,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataItems = []
             editVC.itemColumnNum = editVC.defaultNum
             editVC.titleArray = titleArray
-            editVC.unsavedDatas = unsavedDatas
         }else if segue.identifier == "editSegue" {
             let editVC = segue.destination as! EditViewController
             editVC.segue = "edit"
@@ -200,7 +202,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataItems = dataItems
             editVC.itemColumnNum = adjustItemColumnNum(editVC.defaultNum, editVC.addItemNum)
             editVC.titleArray = titleArray
-            editVC.unsavedDatas = unsavedDatas
         }else if segue.identifier == "listSegue" {
             let listVC = segue.destination as! ListViewController
             listVC.dataArray = dataArray
@@ -258,13 +259,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             choiceButton.alpha = 0.3
         }
         setNowData()
+        
         titleLabel.text = dataTitle
-        if unsavedDatas.contains(dataId){
-            titleLabel.textColor = UIColor.green
-        }else{
-            titleLabel.textColor = UIColor.black
-        }
-
         resultLabel.isHidden = true
         
         tableView.reloadData()
@@ -286,7 +282,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let dataRef = Database.database().reference().child(Const.DataPath)
         dataRef.observe(.childAdded, with: {snapshot in
             print("データの追加")
-            //dataArrayにデータを追加する
+            //dataArrayとtitleArrayにデータを追加する
             let data = Data(snapshot)
             self.dataArray.insert(data, at: 0)
             self.titleArray.append(data.title!)
@@ -296,28 +292,26 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         })
         dataRef.observe(.childChanged, with: {snapshot in
             print("データの更新")
-            //dataArrayから旧データを取り除き、更新データを追加する
-            let data = Data(snapshot)
-            for data_ in self.dataArray {
-                if data_.id == data.id {
-                    let index = self.dataArray.index(of: data_)!
+            //dataArrayとtitleArrayから旧データを取り除き、更新データを追加する
+            let newData = Data(snapshot)
+            for oldData in self.dataArray {
+                if oldData.id == newData.id {
+                    let index = self.dataArray.index(of: oldData)!
                     self.dataArray.remove(at: index)
-                    self.dataArray.insert(data, at: index)
+                    self.dataArray.insert(newData, at: index)
                     
-                    let num = self.titleArray.index(of: data_.title!)!
-                    print(self.titleArray)
-                    print(num)
+                    let num = self.titleArray.index(of: oldData.title!)!
                     self.titleArray.remove(at: num)
-                    self.titleArray.insert(data.title!, at: num)
+                    self.titleArray.insert(newData.title!, at: num)
                     break
                 }
             }
-            print(snapshot.ref)
             self.myReload()
         })
     }
 
     override func viewDidLoad() {
+        print(#function)
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
         
@@ -331,39 +325,23 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         let nib2 = UINib(nibName: "noneTableViewCell", bundle: nil)
         tableView.register(nib2, forCellReuseIdentifier: "noneCell")
         
-        /*
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(closeApp(_:)),
-            name: UIApplication.didEnterBackgroundNotification,
-            object: nil
-        )
-        */
-        
         adjustHeight()
         resultLabel.adjustsFontSizeToFitWidth = true
         titleLabel.adjustsFontSizeToFitWidth = true
 
-        self.setObserveCheckNet()
-//        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0){
-            self.setFireObserve()
-//            self.realmCheck()
-//        }
-
+        self.setObserveNetworkCheck()
+        self.setFireObserve()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         print(#function)
-        print(unsavedDatas)
         myReload()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         print("numberOfRows")
-//        cellCount = 0
-//        print(cellCount)
         if availableFlag {
             return dataItems.count
         }else{
@@ -377,152 +355,59 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             //くじデータがある場合
             let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell", for: indexPath) as! mainItemTableViewCell
             cell.itemLabel.text = dataItems[indexPath.row]
-//            cellCount += 1
-//            print("セル表示: \(cellCount)")
             return cell
         }else{
             //くじデータがない場合
             let cell = tableView.dequeueReusableCell(withIdentifier: "noneCell", for: indexPath) as! noneTableViewCell
             cell.createButton.addTarget(self, action: #selector(tapCreateButton), for: .touchUpInside)
-            //cell.createButton.addTarget(self, action:#selector(tapCreateButton), for: .touchUpInside)
-            
             return cell
         }
     }
     
+    //tableViewのヘッダー表示をオフに
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return .leastNormalMagnitude
     }
 
-    func setObserveCheckNet(){
-        print("checkNet")
-        
-        //テスト
-        //Database.database().reference().
-        
-        //let connectedRef = Database.database().reference(withPath: ".info/connected")
+    func setObserveNetworkCheck(){
+        print(#function)
         global_connectedRef.observe(.value, with: { snapshot in
             if snapshot.value as? Bool ?? false {
-                print("Connected")
-                if !global_networkFlag{
-                    global_networkFlag = true
-                }
-                //self.networkFlag = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0){
-                    if self.networkFlag{
-                        self.unsavedDatas = []
-                    }
+                //オンラインになった時
+                if !global_onlineFlag{
+                    global_onlineFlag = true
                 }
             } else {
-                print("Not connected")
-                if global_networkFlag {
-                    global_networkFlag = false
+                //オフラインになった時
+                if global_onlineFlag {
+                    global_onlineFlag = false
                 }
             }
         })
     }
     
-    func realmCheck(){
-        guard global_offLineServiceFlag else {return}
-        manualUpdateFirebase()
-        manualDeleteFirebase()
-    }
-    
-    func manualDeleteFirebase(){
-        let datas = realm.objects(RealmDeleteData.self)
-        print(datas)
-        
-        for value in datas {
-            guard networkFlag else{continue}
-            
-            print("予備データをデータベースから削除します")
-            Database.database().reference().child(Const.DataPath).child(value.id).removeValue()
-            
-            try! realm.write {
-                realm.delete(value)
-            }
-        }
-    }
-    
-    func manualUpdateFirebase(){
-        let datas = realm.objects(RealmData.self)
-        print(datas)
-
-        for value in datas{
-            let id = value.id!
-            let title = value.title!
-            let items = setItemsArrayFromRealm(value.items)
-            
-            guard networkFlag else {continue}
-            
-            //データベースに保存
-            print("予備データをデータベースへ保存します")
-            let dataRef = Database.database().reference().child(Const.DataPath).child(id)
-            dataRef.setValue(
-                ["title": title, "items": items],
-                withCompletionBlock: {(error, dataRef) in
-                    if let error = error{
-                        print(error)
-                    }
-            })
-            
-            //保存できたらRealmのデータを削除
-            try! realm.write {
-                realm.delete(value)
-            }
-        }
-        
-    }
-
-    func setItemsArrayFromRealm(_ itemList: List<RealmItemData>) -> [String]{
-        var items: [String] = []
-        for value in itemList{
-            items.append(value.item!)
-        }
-        return items
-    }
-
-    //未使用
-    @objc func closeApp(_ notification: Notification){
-        print("アプリが終了します")
-        //print(text)
-        
-    }
-    
+    //「くじを作成する」がタップされた時
     @objc func tapCreateButton(){
-        print("呼ばれました")
         print(#function)
         self.performSegue(withIdentifier: "newSegue", sender: nil)
     }
-    
-    func showNetworkAlert(){
-        let title = "ネットに接続できません"
-        let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
-        let alertController:UIAlertController =
-            UIAlertController(title: title,
-                              message: message,
-                              preferredStyle: .alert)
-        // Default のaction
-        let defaultAction:UIAlertAction = UIAlertAction(
-            title: "OK",
-            style: .default,
-            handler:{(action:UIAlertAction!) -> Void in
-                print("\(String(action.title!))がタップされました")
-        })
-        // actionを追加
-        alertController.addAction(defaultAction)
-        
-        // UIAlertControllerの起動
-        present(alertController, animated: true, completion: nil)
-    }
-
 }
 
-func getTopViewController() -> UIViewController? {
+
+
+
+
+//現在表示中のViewControllerを取得する関数
+func global_getTopViewController() -> UIViewController? {
+    print(#function)
     if let rootViewController = UIApplication.shared.keyWindow?.rootViewController {
+        print("rootVC:")
+        print(rootViewController)
         var topViewControlelr: UIViewController = rootViewController
         
         while let presentedViewController = topViewControlelr.presentedViewController {
+            print("presentedVC")
+            print(presentedViewController)
             topViewControlelr = presentedViewController
         }
         
@@ -532,11 +417,11 @@ func getTopViewController() -> UIViewController? {
     }
 }
 
-
-func showNetworkAlert(){
+//ネットワークアラートを表示する
+func global_showNetworkAlert(){
     let title = "ネットに接続できません"
     let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
-    let alertController:UIAlertController =
+    let alertController =
         UIAlertController(title: title,
                           message: message,
                           preferredStyle: .alert)
@@ -551,7 +436,7 @@ func showNetworkAlert(){
     alertController.addAction(defaultAction)
     
     // UIAlertControllerの起動
-    let vc = getTopViewController()
+    let vc = global_getTopViewController()
     vc?.present(alertController, animated: true, completion: nil)
 }
 

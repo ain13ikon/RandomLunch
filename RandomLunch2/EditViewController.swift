@@ -29,26 +29,17 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     var keepText: TextFieldKeepData!    //入力データを保管する辞書配列
     var editingIndex: Int?           //入力中のセルインデックスをキープする
     var editingTextField: UITextField?  //入力中のtextFieldオブジェクトをキープする
-
-//    var titleArray: [String] = []
     
     //ViewControllerから画面遷移時に送られるデータ
     var segue: String = ""
     var dataId: String = ""
     var dataTitle: String = ""
     var dataItems: [String] = []
-    var titleArray: [String] = []   //未使用データ
-    var unsavedDatas: [String] = [] //Firebaseに正しく保存されていないデータを保管する
+    var titleArray: [String] = []
     
     //データベースに保存する新しいデータ
     var newTitleText: String = ""
     var newItemArray: [String] = []
-    
-    //ネットワークに繋がっているか
-    var networkFlag: Bool!
-    
-    
-    
     
     deinit {
         print("Edit deinit")
@@ -75,22 +66,11 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
                 newItemArray.append(text)
             }
         }
-        
-        print(newTitleText)
-        print(newItemArray)
-        
+
         //入力チェック
         guard check() else {return}
         
-        /*
-        do{
-            //データベースに保存
-            try? saveToDatabase()
-        }catch{
-            print("エラー！！！！！")
-        }
-        */
-        
+        //データベースに保存
         saveToDatabase()
         
         //抽選画面へ戻る
@@ -98,7 +78,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         if segue == "new"{
             vc.nowDataIndex = 0
         }
-        vc.unsavedDatas = unsavedDatas
         self.dismiss(animated: true, completion: nil)
         
     }
@@ -111,6 +90,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     func saveToDatabase(){
         print(#function)
         
+        //保存予定のデータを未保存配列に入れる
         let time = Date().timeIntervalSince1970
         let unsavedData = UnsavedData(time, newTitleText)
         print(unsavedData)
@@ -128,7 +108,7 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
                 ["title": newTitleText, "items": newItemArray], withCompletionBlock: {_,_ in
                     print("登録完了")
                     print(self.newTitleText)
-                    print(global_unsavedDatas)
+                    //未保存配列から削除
                     for (index, data) in global_unsavedDatas.enumerated(){
                         if data.time == time {
                             global_unsavedDatas.remove(at: index)
@@ -143,13 +123,11 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
             let dataRef = Database.database().reference().child(Const.DataPath).child(dataId)
             //上書き
             print("上書き保存")
-            print(dataRef.key)
             dataRef.updateChildValues(
                 ["title": newTitleText, "items": newItemArray],
                 withCompletionBlock: {_,_ in
                     print("登録完了")
                     print(self.newTitleText)
-                    print(global_unsavedDatas)
                     for (index, data) in global_unsavedDatas.enumerated(){
                         if data.time == time {
                             global_unsavedDatas.remove(at: index)
@@ -179,13 +157,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
             errors["item"]?.append("※アイテムは２つ以上登録してください。")
             returnFlag = false
         }
-        
-        /*
-        //エラーがあったらアラートを表示
-        if error != [] {
-            showAlert(error)
-        }
-        */
         
         //エラーを表示
         showError(errors)
@@ -218,33 +189,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         }else{
             itemErrorLabel.textColor = UIColor.red
         }
-    }
-    
-    func showAlert(_ alerts: [String]){
-        let title = "入力が間違っています"
-        var message = ""
-        for text in alerts {
-            message += text
-        }
-        
-        let alertController:UIAlertController =
-            UIAlertController(title: title,
-                              message: message,
-                              preferredStyle: .alert)
-        
-        // Default のaction
-        let defaultAction:UIAlertAction = UIAlertAction(
-            title: "OK",
-            style: .default,
-            handler:{(action:UIAlertAction!) -> Void in
-                print("\(String(action.title!))がタップされました")
-        })
-        
-        // actionを追加
-        alertController.addAction(defaultAction)
-        
-        // UIAlertControllerの起動
-        present(alertController, animated: true, completion: nil)
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -311,48 +255,13 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         let addCellNib = UINib(nibName: "editAddTableViewCell", bundle: nil)
         tableView.register(addCellNib, forCellReuseIdentifier: "addCell")
         
-        
-        //キーボードの高さに合わせてtableViewの位置を調整
-        //constantTableViewBottom.constant = keyboardHeight
-        
-        //オンライン状態を監視
-        /*
-        let connectedRef = Database.database().reference(withPath: ".info/connected")
-        connectedRef.observe(.value, with: { snapshot in
-            if snapshot.value as? Bool ?? false {
-                print("Connected")
-                //self.networkFlag = true
-                if !global_networkFlag{
-                    print("オフからオンへ")
-                    global_networkFlag = true
-                }
-                    //DispatchQueue.main.asyncAfter(deadline: .now() + 3.0){
-                    //if self.networkFlag {
-                        //self.unsavedDatas = []   //3秒後に未保存データが保存されたと判断する
-                    //}
-                //}
-            } else {
-                print("Not connected")
-                //self.networkFlag = false
-                if global_networkFlag{
-                    print("オンからオフへ")
-                    global_networkFlag = false
-                }
-                //self.showNetworkAlert()
-            }
-        })
-         */
-        
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         print("edit appear")
-        print("未保存データ:")
-        print(unsavedDatas)
         print(titleArray)
-    
         
         NotificationCenter.default.addObserver(
             self,
@@ -367,19 +276,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
             name: UIResponder.keyboardWillHideNotification,
             object: nil
         )
-
-        
-        //キーボードの高さに合わせてtableViewの位置を調整
-        //let keyboardHeight = KeyboardService.keyboardHeight()
-        //print("keyboardの高さ：\(keyboardHeight)")
-        //constantTableViewBottom.constant = keyboardHeight + 40
-        /*メモ：
-         viewWillAppearメソッドからこれを呼び出します。
-         viewDidLoadで呼び出されるべきではありません。
-         正しい値はビューが配置されているかどうかに依存します。
-         
-         keyboardHeight()で取得できる値には変換欄が含まれない？
-         */
 
         titleTextField.text = dataTitle
         titleErrorLabel.text = ""
@@ -477,47 +373,6 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     
-    func reserveRealm(){
-        guard global_offLineServiceFlag else{return}
-        print("Realmに予備保存")
-        let data = RealmData()
-        data.id = dataId
-        data.title = newTitleText
-        for value in newItemArray{
-            let subData = RealmItemData()
-            subData.item = value
-            data.items.append(subData)
-        }
-        
-        let realm = try! Realm()
-        try! realm.write {
-            realm.add(data)
-        }
-        
-        let keep = realm.objects(RealmData.self)
-        print(keep)
-    }
-    
-    func showNetworkAlert(){
-        let title = "ネットに接続できません"
-        let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
-        let alertController:UIAlertController =
-            UIAlertController(title: title,
-                              message: message,
-                              preferredStyle: .alert)
-        // Default のaction
-        let defaultAction:UIAlertAction = UIAlertAction(
-            title: "OK",
-            style: .default,
-            handler:{(action:UIAlertAction!) -> Void in
-                print("\(String(action.title!))がタップされました")
-        })
-        // actionを追加
-        alertController.addAction(defaultAction)
-        
-        // UIAlertControllerの起動
-        present(alertController, animated: true, completion: nil)
-    }
 
     
     /*
@@ -529,5 +384,37 @@ class EditViewController: UIViewController, UITableViewDelegate, UITableViewData
         // Pass the selected object to the new view controller.
     }
     */
+    
+    
+    /*
+     func showAlert(_ alerts: [String]){
+     let title = "入力が間違っています"
+     var message = ""
+     for text in alerts {
+     message += text
+     }
+     
+     let alertController:UIAlertController =
+     UIAlertController(title: title,
+     message: message,
+     preferredStyle: .alert)
+     
+     // Default のaction
+     let defaultAction:UIAlertAction = UIAlertAction(
+     title: "OK",
+     style: .default,
+     handler:{(action:UIAlertAction!) -> Void in
+     print("\(String(action.title!))がタップされました")
+     })
+     
+     // actionを追加
+     alertController.addAction(defaultAction)
+     
+     // UIAlertControllerの起動
+     present(alertController, animated: true, completion: nil)
+     }
+     */
+    
+
 
 }
