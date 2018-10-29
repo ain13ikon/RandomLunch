@@ -126,9 +126,6 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         refreshControl.addTarget(self, action: #selector(refreshControlValueChanged(sender:)), for: .valueChanged)
         tableView.addSubview(refreshControl)
         
-        //tableView.addSubview(refreshControl)
-        
-        
         //セルのnib取得
         let nib = UINib(nibName: "listTitleTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "titleCell")
@@ -154,18 +151,25 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         cell.titleLabel.adjustsFontSizeToFitWidth = true
         cell.titleLabel.text = displayedDataArray[indexPath.row].title!
         
-        //未保存のタイトルはオレンジ色で表示する
+        //未保存のタイトルに注釈をつける
         if global_unsavedTitleArray.contains(dataArray[indexPath.row].title!){
-            cell.titleLabel.textColor = UIColor.orange
+            //cell.titleLabel.textColor = UIColor.orange
+            cell.unsavedCommentLabel.isHidden = false
+            cell.unsavedHeightConstraint.constant = 14.5
+            
         }else{
-            cell.titleLabel.textColor = UIColor.black
+            //cell.titleLabel.textColor = UIColor.black
+            cell.unsavedCommentLabel.isHidden = true
+            cell.unsavedHeightConstraint.constant = 0
         }
+        /*
         //未保存データがある場合に注釈を表示する
         if global_unsavedTitleArray.count > 0 {
             unsavedLabel.isHidden = false
         }else{
             unsavedLabel.isHidden = true
         }
+        */
         
         return cell
     }
@@ -180,10 +184,9 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
     }
 
     @objc func refreshControlValueChanged(sender: UIRefreshControl) {
+        sender.beginRefreshing()
         tableView.reloadData()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-            sender.endRefreshing()
-        })
+        sender.endRefreshing()
     }
 
 

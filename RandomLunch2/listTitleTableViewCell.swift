@@ -11,6 +11,8 @@ import UIKit
 class listTitleTableViewCell: UITableViewCell {
 
     @IBOutlet weak var titleLabel: UILabel!
+    @IBOutlet weak var unsavedCommentLabel: UILabel!
+    @IBOutlet weak var unsavedHeightConstraint: NSLayoutConstraint!
     
     override func awakeFromNib() {
         super.awakeFromNib()
