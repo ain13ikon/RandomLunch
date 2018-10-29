@@ -51,6 +51,16 @@ class TextFieldKeepData: NSObject {
     
 }
 
+class UnsavedData: NSObject{
+    var time: TimeInterval
+    var title: String
+    
+    init(_ time: TimeInterval, _ title: String) {
+        self.time = time
+        self.title = title
+    }
+}
+
 class RealmData: Object {
     @objc dynamic var id: String?
     @objc dynamic var title: String?

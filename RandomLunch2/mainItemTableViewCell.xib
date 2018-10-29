@@ -20,17 +20,29 @@
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="o4A-O5-TXt">
-                        <rect key="frame" x="5" y="2" width="310" height="172.5"/>
+                        <rect key="frame" x="27" y="2" width="288" height="172.5"/>
                         <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="・" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="U9G-pY-A4U">
+                        <rect key="frame" x="5" y="2" width="20" height="172.5"/>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="20" id="g2m-gM-qrA"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
                 </subviews>
                 <constraints>
+                    <constraint firstItem="U9G-pY-A4U" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="2" id="HGr-pY-DlW"/>
+                    <constraint firstAttribute="bottom" secondItem="U9G-pY-A4U" secondAttribute="bottom" constant="2" id="Jir-og-qmJ"/>
+                    <constraint firstItem="o4A-O5-TXt" firstAttribute="left" secondItem="U9G-pY-A4U" secondAttribute="right" constant="2" id="T3m-FW-vKe"/>
+                    <constraint firstItem="U9G-pY-A4U" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="5" id="YCV-N6-iJ0"/>
                     <constraint firstAttribute="bottom" secondItem="o4A-O5-TXt" secondAttribute="bottom" constant="2" id="hOI-oi-Mxt"/>
                     <constraint firstItem="o4A-O5-TXt" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="2" id="oPu-36-B3A"/>
                     <constraint firstAttribute="trailing" secondItem="o4A-O5-TXt" secondAttribute="trailing" constant="5" id="uPM-2g-skN"/>
-                    <constraint firstItem="o4A-O5-TXt" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="5" id="vl3-mY-rUW"/>
                 </constraints>
             </tableViewCellContentView>
             <viewLayoutGuide key="safeArea" id="njF-e1-oar"/>
@@ -38,7 +50,7 @@
             <connections>
                 <outlet property="itemLabel" destination="o4A-O5-TXt" id="q84-SM-mNL"/>
             </connections>
-            <point key="canvasLocation" x="52.799999999999997" y="171.36431784107947"/>
+            <point key="canvasLocation" x="51" y="-99"/>
         </tableViewCell>
     </objects>
 </document>

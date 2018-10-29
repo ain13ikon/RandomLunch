@@ -12,7 +12,31 @@ import FirebaseDatabase
 import RealmSwift
 
 var global_offLineServiceFlag = false   //オフライン時にコード上でRealm処理をするか ※順番が競合することがある
-//var global_networkFlag = false  //ネットワークに繋がっているか
+var global_unsavedTitleArray: [String] = []     //未保存データのタイトル配列
+var global_unsavedDatas: [UnsavedData] = []{    //未保存データのキュー送信時刻とタイトル
+    didSet{
+        global_unsavedTitleArray = []
+        for value in global_unsavedDatas {
+            global_unsavedTitleArray.append(value.title)
+        }
+        print("未保存のタイトル")
+        print(global_unsavedTitleArray)
+    }
+}
+
+var global_networkFlag = false {
+    didSet{
+        if global_networkFlag{
+            print("オンライン")
+        }else{
+            print("オフライン")
+            showNetworkAlert()
+        }
+    }
+}  //ネットワークに繋がっているか
+
+let global_connectedRef = Database.database().reference(withPath: ".info/connected")
+
 
 class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
@@ -32,7 +56,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     var networkFlag: Bool = false   //通信状態
     let realm = try! Realm()        //Realmインスタンスの取得
     var availableFlag = false  //使用可能なデータがあるか
-    var resultLabelDefaultPosition: CGFloat!
+    var cellCount = 0
+    var unsavedDatas: [String] = []
+    
     
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var tableView: UITableView!
@@ -165,6 +191,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataItems = []
             editVC.itemColumnNum = editVC.defaultNum
             editVC.titleArray = titleArray
+            editVC.unsavedDatas = unsavedDatas
         }else if segue.identifier == "editSegue" {
             let editVC = segue.destination as! EditViewController
             editVC.segue = "edit"
@@ -173,6 +200,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             editVC.dataItems = dataItems
             editVC.itemColumnNum = adjustItemColumnNum(editVC.defaultNum, editVC.addItemNum)
             editVC.titleArray = titleArray
+            editVC.unsavedDatas = unsavedDatas
         }else if segue.identifier == "listSegue" {
             let listVC = segue.destination as! ListViewController
             listVC.dataArray = dataArray
@@ -231,9 +259,16 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         }
         setNowData()
         titleLabel.text = dataTitle
+        if unsavedDatas.contains(dataId){
+            titleLabel.textColor = UIColor.green
+        }else{
+            titleLabel.textColor = UIColor.black
+        }
+
         resultLabel.isHidden = true
         
         tableView.reloadData()
+        tableView.flashScrollIndicators()
     }
 
     //ディスプレイの高さを端末の画面サイズを元に調整する
@@ -256,6 +291,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             self.dataArray.insert(data, at: 0)
             self.titleArray.append(data.title!)
             
+            print(snapshot.ref)
             self.myReload()
         })
         dataRef.observe(.childChanged, with: {snapshot in
@@ -276,6 +312,7 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
                     break
                 }
             }
+            print(snapshot.ref)
             self.myReload()
         })
     }
@@ -312,8 +349,6 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             self.setFireObserve()
 //            self.realmCheck()
 //        }
-        
-        resultLabelDefaultPosition = self.resultLabel.center.y
 
     }
     
@@ -321,10 +356,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         super.viewWillAppear(animated)
         
         print(#function)
+        print(unsavedDatas)
         myReload()
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        print("numberOfRows")
+//        cellCount = 0
+//        print(cellCount)
         if availableFlag {
             return dataItems.count
         }else{
@@ -333,10 +372,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        print("cellForRowAt")
         if availableFlag {
             //くじデータがある場合
             let cell = tableView.dequeueReusableCell(withIdentifier: "itemCell", for: indexPath) as! mainItemTableViewCell
-            cell.itemLabel.text = "・" + dataItems[indexPath.row]
+            cell.itemLabel.text = dataItems[indexPath.row]
+//            cellCount += 1
+//            print("セル表示: \(cellCount)")
             return cell
         }else{
             //くじデータがない場合
@@ -347,47 +389,37 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             return cell
         }
     }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return .leastNormalMagnitude
+    }
 
     func setObserveCheckNet(){
         print("checkNet")
-        let connectedRef = Database.database().reference(withPath: ".info/connected")
-        connectedRef.observe(.value, with: { snapshot in
+        
+        //テスト
+        //Database.database().reference().
+        
+        //let connectedRef = Database.database().reference(withPath: ".info/connected")
+        global_connectedRef.observe(.value, with: { snapshot in
             if snapshot.value as? Bool ?? false {
                 print("Connected")
-                self.networkFlag = true
+                if !global_networkFlag{
+                    global_networkFlag = true
+                }
+                //self.networkFlag = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0){
+                    if self.networkFlag{
+                        self.unsavedDatas = []
+                    }
+                }
             } else {
                 print("Not connected")
-                self.networkFlag = false
-                //１秒待ってもネット接続がされなければアラートを表示（最初の接続時にNot connected→Connectedになるため少し待つ）
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    if !self.networkFlag {
-                        self.showNetworkAlert()
-                    }
+                if global_networkFlag {
+                    global_networkFlag = false
                 }
             }
         })
-    }
-    
-    
-    func showNetworkAlert(){
-        let title = "ネットに接続できません"
-        let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
-        let alertController:UIAlertController =
-            UIAlertController(title: title,
-                              message: message,
-                              preferredStyle: .alert)
-        // Default のaction
-        let defaultAction:UIAlertAction = UIAlertAction(
-            title: "OK",
-            style: .default,
-            handler:{(action:UIAlertAction!) -> Void in
-                print("\(String(action.title!))がタップされました")
-        })
-        // actionを追加
-        alertController.addAction(defaultAction)
-        
-        // UIAlertControllerの起動
-        present(alertController, animated: true, completion: nil)
     }
     
     func realmCheck(){
@@ -462,5 +494,67 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         print(#function)
         self.performSegue(withIdentifier: "newSegue", sender: nil)
     }
+    
+    func showNetworkAlert(){
+        let title = "ネットに接続できません"
+        let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
+        let alertController:UIAlertController =
+            UIAlertController(title: title,
+                              message: message,
+                              preferredStyle: .alert)
+        // Default のaction
+        let defaultAction:UIAlertAction = UIAlertAction(
+            title: "OK",
+            style: .default,
+            handler:{(action:UIAlertAction!) -> Void in
+                print("\(String(action.title!))がタップされました")
+        })
+        // actionを追加
+        alertController.addAction(defaultAction)
+        
+        // UIAlertControllerの起動
+        present(alertController, animated: true, completion: nil)
+    }
+
 }
+
+func getTopViewController() -> UIViewController? {
+    if let rootViewController = UIApplication.shared.keyWindow?.rootViewController {
+        var topViewControlelr: UIViewController = rootViewController
+        
+        while let presentedViewController = topViewControlelr.presentedViewController {
+            topViewControlelr = presentedViewController
+        }
+        
+        return topViewControlelr
+    } else {
+        return nil
+    }
+}
+
+
+func showNetworkAlert(){
+    let title = "ネットに接続できません"
+    let message = "接続を確認してください。\nオフライン状態ですとデータが正しく保存されないことがあります。"
+    let alertController:UIAlertController =
+        UIAlertController(title: title,
+                          message: message,
+                          preferredStyle: .alert)
+    // Default のaction
+    let defaultAction:UIAlertAction = UIAlertAction(
+        title: "OK",
+        style: .default,
+        handler:{(action:UIAlertAction!) -> Void in
+            print("\(String(action.title!))がタップされました")
+    })
+    // actionを追加
+    alertController.addAction(defaultAction)
+    
+    // UIAlertControllerの起動
+    let vc = getTopViewController()
+    vc?.present(alertController, animated: true, completion: nil)
+}
+
+
+
 

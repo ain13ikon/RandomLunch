@@ -7,17 +7,18 @@
 //
 
 import UIKit
-//import Firebase
-//import FirebaseDatabase
+import Firebase
+import FirebaseDatabase
 
 class ListViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var unsavedLabel: UILabel!
     
     var dataArray: [Data] = []
     var displayedDataArray: [Data] = []
-    //var searchWord: String!
+    var unsavedTitleArray: [String] = []
     
     deinit {
         print("List deinit")
@@ -126,6 +127,7 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         //セルのnib取得
         let nib = UINib(nibName: "listTitleTableViewCell", bundle: nil)
         tableView.register(nib, forCellReuseIdentifier: "titleCell")
+        //setObserveCheckNet()
         
     }
     
@@ -146,6 +148,19 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         cell.titleLabel.adjustsFontSizeToFitWidth = true
         cell.titleLabel.text = displayedDataArray[indexPath.row].title!
         
+        //未保存のタイトルはオレンジ色で表示する
+        if global_unsavedTitleArray.contains(dataArray[indexPath.row].title!){
+            cell.titleLabel.textColor = UIColor.orange
+        }else{
+            cell.titleLabel.textColor = UIColor.black
+        }
+        //未保存データがある場合に注釈を表示する
+        if global_unsavedTitleArray.count > 0 {
+            unsavedLabel.isHidden = false
+        }else{
+            unsavedLabel.isHidden = true
+        }
+        
         return cell
     }
 
@@ -153,14 +168,28 @@ class ListViewController: UIViewController, UITableViewDelegate, UITableViewData
         print(indexPath.row)
         
         let vc = self.presentingViewController as! ViewController
-        //vc.dataId = dataArray[indexPath.row].id!
-        //vc.dataTitle = dataArray[indexPath.row].title!
-        //vc.dataItems = dataArray[indexPath.row].items!
-        
         vc.nowDataIndex = dataArray.index(of: displayedDataArray[indexPath.row])!
         print(vc.nowDataIndex)
         self.dismiss(animated: true, completion: nil)
     }
+    
+    func setObserveCheckNet(){
+        print("checkNet")
+        
+        let connectedRef = Database.database().reference(withPath: ".info/connected")
+        connectedRef.observe(.value, with: { snapshot in
+            if snapshot.value as? Bool ?? false {
+                if !global_networkFlag {
+                    global_networkFlag = true
+                }
+            } else {
+                if global_networkFlag {
+                    global_networkFlag = false
+                }
+            }
+        })
+    }
+
 
 
     /*
