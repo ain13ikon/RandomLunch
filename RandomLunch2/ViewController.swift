@@ -16,7 +16,6 @@ import RealmSwift
 
 let global_connectedRef =
     Database.database().reference(withPath: ".info/connected")    //ネットワーク監視用の変数
-
 var global_onlineFlag = false {                //ネットワークフラグを管理し、オフラインならアラートを表示する
     didSet{
         if global_onlineFlag{
@@ -30,7 +29,7 @@ var global_onlineFlag = false {                //ネットワークフラグを�
             }
         }else{
             print("オフライン")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0){
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2){
                 if !global_onlineFlag{
                     global_showNetworkAlert()
                 }
@@ -373,11 +372,13 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         print(#function)
         global_connectedRef.observe(.value, with: { snapshot in
             if snapshot.value as? Bool ?? false {
+                print("aaa")
                 //オンラインになった時
                 if !global_onlineFlag{
                     global_onlineFlag = true
                 }
             } else {
+                print("bbb")
                 //オフラインになった時
                 if global_onlineFlag {
                     global_onlineFlag = false
